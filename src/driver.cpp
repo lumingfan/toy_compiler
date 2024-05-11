@@ -23,18 +23,23 @@ using namespace antlr4;
 using namespace l24;
 
 int main(int argc, const char *argv[]) {
-      std::string filename("../test/runtime/simple.l24");
-      std::ifstream stream(filename);
-      if (!stream.good()) {
-          llvm::errs() << "error: no such file: '" << filename << "'\n";
-          return 1;
-      }
+    if (argc != 2) {
+        llvm::errs() << "Usage: ./bin/l24 <filename>" << "\n";
+        return 1;
+    }
 
-      FrontEnd front_end;
-      auto prog_node = front_end.parse(stream);
+    std::string filename(argv[1]);
+    std::ifstream stream(filename);
+    if (!stream.good()) {
+      llvm::errs() << "error: no such file: '" << filename << "'\n";
+      return 1;
+    }
 
-      CodeGenBase cgb;
-      cgb.codeGenProgram(prog_node);
+    FrontEnd front_end;
+    auto prog_node = front_end.parse(stream);
 
-      return 0;
+    CodeGenBase cgb;
+    cgb.codeGenProgram(prog_node);
+
+    return 0;
 }

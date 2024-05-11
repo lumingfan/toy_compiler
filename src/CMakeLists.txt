@@ -9,7 +9,6 @@ add_subdirectory(frontend)
 # include antlr generated files
 include_directories(${ANTLR_l24Grammar_OUTPUT_DIR})
 
-
 # compiler binary target
 add_executable(l24 
     ${CMAKE_CURRENT_SOURCE_DIR}/driver.cpp

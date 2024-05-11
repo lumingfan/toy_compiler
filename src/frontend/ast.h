@@ -9,7 +9,6 @@
 namespace l24 {
 class CodeGenContext;
 
-void Print();
 
 class ASTNode {
 public:
@@ -41,6 +40,30 @@ public:
 
 class StmtNode : public ASTNode {
 public:
+    std::shared_ptr<ASTNode> _expr;
+};
+
+class ExprNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _unary_expr;
+};
+
+class UnaryExprNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _primary_expr;
+    std::shared_ptr<ASTNode> _unary_op;
+    std::shared_ptr<ASTNode> _unary_expr;
+};
+
+class UnaryOpNode : public ASTNode {
+public:
+    std::string _op;
+    explicit UnaryOpNode(std::string op): _op(std::move(op)){}
+};
+
+class PrimExprNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _expr;
     std::shared_ptr<ASTNode> _number;
 };
 

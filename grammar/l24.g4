@@ -30,13 +30,18 @@ LeftBrace:          '{';
 RightBrace:         '}';
 LeftParen:          '(';
 RightParen:         ')';
- 
+Not:                '!';
+
 //标识符
 Ident :                [a-zA-Z_][a-zA-Z0-9_]*;
  
 //空白字符，抛弃
 Whitespace:         [ \t]+ -> skip;
 Newline:            ( '\r' '\n'?|'\n')-> skip;
+
+// comments, skip
+BlockComments:           '/*'.*?'*/' -> skip;
+LINECOMMENT:             '//' ~[\r\n]* -> skip;
 
 
 // parser
@@ -56,8 +61,29 @@ block
 
 
 stmt
-    : Return number SemiColon
+    : Return exp SemiColon
     ;
+
+exp
+    : unaryExp
+    ;
+
+unaryExp
+    : primaryExp
+    | unaryOp unaryExp
+    ;
+
+unaryOp
+    : Plus
+    | Minus
+    | Not
+    ;
+
+primaryExp
+    : LeftParen exp RightParen
+    | number
+    ;
+
 
 number 
     : IntLiteral
