@@ -1,0 +1,8 @@
+.vscode/
+.DS_Store
+.antlr/
+.idea/
+cmake-build-debug/
+
+build/
+antlr4-runtime/
