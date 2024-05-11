@@ -3,6 +3,7 @@
 .antlr/
 .idea/
 cmake-build-debug/
+tmp/
 
 build/
 antlr4-runtime/

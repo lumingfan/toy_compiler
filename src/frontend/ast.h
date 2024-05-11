@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 #include <iostream>
 #include <memory>
@@ -13,14 +14,11 @@ void Print();
 class ASTNode {
 public:
     virtual ~ASTNode() = default; 
-    virtual llvm::Value* codeGen() = 0; 
 };
 
-class ProgNode : ASTNode  {
+class ProgNode : public ASTNode  {
 public:
     std::shared_ptr<ASTNode> _func;
-    virtual llvm::Value* codeGen() override;
-
 };
 
 class FuncNode : public ASTNode {
@@ -28,32 +26,28 @@ public:
     std::string _type;
     std::string _ident;
     std::shared_ptr<ASTNode> _block; 
-    virtual llvm::Value* codeGen() override;
 };
 
 class IdentNode : public ASTNode {
 public:
     std::string _ident;
-    IdentNode(std::string ident) : _ident(ident) {}
-    virtual llvm::Value* codeGen() override; 
+    explicit IdentNode(std::string ident) : _ident(std::move(ident)) {}
 };
 
 class BlockNode : public ASTNode {
 public:
     std::shared_ptr<ASTNode> _stmt;
-    virtual llvm::Value* codeGen() override; 
 };
 
 class StmtNode : public ASTNode {
 public:
     std::shared_ptr<ASTNode> _number;
-    virtual llvm::Value* codeGen() override; 
 };
 
 class NumberNode : public ASTNode {
 public:
     long long _int_literal;
-    virtual llvm::Value* codeGen() override; 
+    explicit NumberNode(int literal): _int_literal(literal) {}
 };
 
 

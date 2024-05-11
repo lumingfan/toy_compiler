@@ -11,7 +11,7 @@ class FrontEnd {
 
 public:
     // Parse an input stream and return an AST.
-    std::shared_ptr<ProgNode> parse(std::istream& Stream);
+    std::shared_ptr<ASTNode> parse(std::istream& Stream);
 };
 
 }  // namespace l24

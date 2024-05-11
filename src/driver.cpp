@@ -17,6 +17,7 @@
 
 #include "frontend/ast.h"
 #include "frontend/front_end.h"
+#include "frontend/code_gen.h"
 
 using namespace antlr4;
 using namespace l24;
@@ -32,7 +33,8 @@ int main(int argc, const char *argv[]) {
       FrontEnd front_end;
       auto prog_node = front_end.parse(stream);
 
-      prog_node->codeGen();
+      CodeGenBase cgb;
+      cgb.codeGenProgram(prog_node);
 
       return 0;
 }

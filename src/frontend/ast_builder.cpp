@@ -6,7 +6,7 @@
 
 namespace l24 {
 
-std::shared_ptr<ProgNode> ASTBuilder::build(l24Parser::ProgramContext *ctx) {
+std::shared_ptr<ASTNode> ASTBuilder::build(l24Parser::ProgramContext *ctx) {
     return std::any_cast<std::shared_ptr<ProgNode>>(visitProgram(ctx));
 }
 
@@ -38,9 +38,7 @@ std::any ASTBuilder::visitStmt(l24Parser::StmtContext *ctx) {
 }
 
 std::any ASTBuilder::visitNumber(l24Parser::NumberContext *ctx) {
-    auto number = std::make_shared<NumberNode>();
-    number->_int_literal = std::stoll(ctx->IntLiteral()->getText());
-    return number;
+    return std::make_shared<NumberNode>(std::stoll(ctx->IntLiteral()->getText()));
 }
 
 } // namespace l24

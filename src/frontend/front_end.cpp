@@ -21,7 +21,7 @@ using namespace antlr4;
 
 namespace l24 {
 
-std::shared_ptr<ProgNode> FrontEnd::parse(std::istream& stream) {
+std::shared_ptr<ASTNode> FrontEnd::parse(std::istream& stream) {
 
     llvm::DebugFlag = true;
 

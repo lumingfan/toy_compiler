@@ -13,13 +13,13 @@ namespace l24 {
 
 class ASTBuilder : public l24BaseVisitor {
 public:
-    std::shared_ptr<ProgNode> build(l24Parser::ProgramContext *ctx);
+    std::shared_ptr<ASTNode> build(l24Parser::ProgramContext *ctx);
 
-    virtual std::any visitProgram(l24Parser::ProgramContext *ctx) override;
-    virtual std::any visitFunc(l24Parser::FuncContext *ctx) override;
-    virtual std::any visitBlock(l24Parser::BlockContext *ctx) override;
-    virtual std::any visitStmt(l24Parser::StmtContext *ctx) override;
-    virtual std::any visitNumber(l24Parser::NumberContext *ctx) override;
+    std::any visitProgram(l24Parser::ProgramContext *ctx) override;
+    std::any visitFunc(l24Parser::FuncContext *ctx) override;
+    std::any visitBlock(l24Parser::BlockContext *ctx) override;
+    std::any visitStmt(l24Parser::StmtContext *ctx) override;
+    std::any visitNumber(l24Parser::NumberContext *ctx) override;
 };
 
 } // namespace l24
