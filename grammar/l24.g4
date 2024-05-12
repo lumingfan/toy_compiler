@@ -11,6 +11,7 @@ Scan : 'scan';
 Print : 'print';
 Int : 'int';
 Return : 'return';
+Const : 'const';
 
 
 // literal
@@ -59,17 +60,49 @@ program
     ;
 
 func
-    : Int Ident LeftParen RightParen block 
+    : 'int' Ident '(' ')' block
     ;
 
 
 block
-    : LeftBrace stmt RightBrace
+    : '{' (blockItem)* '}'
     ;
 
+blockItem
+    : decl
+    | stmt
+    ;
+
+decl
+    : constDecl
+    ;
 
 stmt
     : Return exp SemiColon
+    ;
+
+constDecl
+    : 'const' bType constDef (',' constDef)* ';'
+    ;
+
+bType
+    : 'int'
+    ;
+
+constDef
+    : Ident '=' constInitVal
+    ;
+
+constInitVal
+    : constExp
+    ;
+
+constExp
+    : exp
+    ;
+
+lVal
+    : Ident
     ;
 
 exp
@@ -122,8 +155,9 @@ unaryOp
     ;
 
 primaryExp
-    : LeftParen exp RightParen
+    : '(' exp ')'
     | number
+    | lVal
     ;
 
 

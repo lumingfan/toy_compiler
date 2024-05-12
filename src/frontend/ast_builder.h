@@ -22,6 +22,12 @@ public:
     std::any visitProgram(l24Parser::ProgramContext *ctx) override;
     std::any visitFunc(l24Parser::FuncContext *ctx) override;
     std::any visitBlock(l24Parser::BlockContext *ctx) override;
+    std::any visitBlockItem(l24Parser::BlockItemContext *ctx) override;
+    std::any visitDecl(l24Parser::DeclContext *ctx) override;
+    std::any visitConstDecl(l24Parser::ConstDeclContext *ctx) override;
+    std::any visitConstDef(l24Parser::ConstDefContext *ctx) override;
+    std::any visitConstInitVal(l24Parser::ConstInitValContext *ctx) override;
+    std::any visitConstExp(l24Parser::ConstExpContext *ctx) override;
     std::any visitStmt(l24Parser::StmtContext *ctx) override;
     std::any visitNumber(l24Parser::NumberContext *ctx) override;
     std::any visitExp(l24Parser::ExpContext *ctx) override;
@@ -34,6 +40,7 @@ public:
     std::any visitLAndExp(l24Parser::LAndExpContext *ctx) override;
     std::any visitEqExp(l24Parser::EqExpContext *ctx) override;
     std::any visitRelExp(l24Parser::RelExpContext *ctx) override;
+    std::any visitLVal(l24Parser::LValContext *ctx) override;
 
 
 };

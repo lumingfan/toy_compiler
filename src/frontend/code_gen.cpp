@@ -79,18 +79,27 @@ llvm::Value *CodeGenBase::codeGenFunc(std::shared_ptr<ASTNode> node) {
     func->eraseFromParent();
     return nullptr;
 }
+llvm::Value *CodeGenBase::codeGenLVal(std::shared_ptr<ASTNode> node) {
+    auto l_val_node = std::dynamic_pointer_cast<LValNode>(node);
+    return codeGenIdent(l_val_node->_ident);
+}
+
 llvm::Value *CodeGenBase::codeGenIdent(std::shared_ptr<ASTNode> node) {
     auto ident_node = std::dynamic_pointer_cast<IdentNode>(node);
     llvm::Value *val = this->_ctx._named_values[ident_node->_ident];
     if (val == nullptr) {
         CodeGenContext::LogError("Unknown variable name");
-        return nullptr;
+        exit(1);
     }
     return val;
 }
 llvm::Value *CodeGenBase::codeGenBlock(std::shared_ptr<ASTNode> node) {
     auto block_node = std::dynamic_pointer_cast<BlockNode>(node);
-    return this->codeGenStmt(block_node->_stmt);
+    llvm::Value *ret_val = nullptr;
+    for (auto blk_item_node : block_node->_block_items) {
+        ret_val = this->codeGenBlockItem(blk_item_node);
+    }
+    return ret_val;
 }
 llvm::Value *CodeGenBase::codeGenStmt(std::shared_ptr<ASTNode> node) {
     auto stmt_node = std::dynamic_pointer_cast<StmtNode>(node);
@@ -130,6 +139,8 @@ llvm::Value *CodeGenBase::codeGenPrimaryExp(std::shared_ptr<ASTNode> node) {
         return this->codeGenExp(prim_exp_node->_expr);
     } else if (prim_exp_node->_number){
         return this->codeGenNumber(prim_exp_node->_number);
+    } else if (prim_exp_node->_l_val) {
+        return this->codeGenLVal(prim_exp_node->_l_val);
     }
     return nullptr;
 }
@@ -211,5 +222,47 @@ llvm::Value *CodeGenBase::codeGenRelExp(std::shared_ptr<ASTNode> node) {
         }
     }
     return this->codeGenAddExp(rel_exp_node->_add_expr);
+}
+llvm::Value *CodeGenBase::codeGenBlockItem(std::shared_ptr<ASTNode> node) {
+    auto blk_item_node = std::dynamic_pointer_cast<BlockItemNode>(node);
+    if (blk_item_node->_decl) {
+        return this->codeGenDecl(blk_item_node->_decl);
+    }
+    return this->codeGenStmt(blk_item_node->_stmt);
+}
+llvm::Value *CodeGenBase::codeGenDecl(std::shared_ptr<ASTNode> node) {
+    auto decl_node = std::dynamic_pointer_cast<DeclNode>(node);
+    return this->codeGenConstDecl(decl_node->_const_decl);
+}
+llvm::Value *CodeGenBase::codeGenConstDecl(std::shared_ptr<ASTNode> node) {
+    auto const_decl_node = std::dynamic_pointer_cast<ConstDeclNode>(node);
+    for (const auto& const_def_ast_node : const_decl_node->_const_defs) {
+        this->codeGenConstDef(const_def_ast_node);
+        auto const_def_node = std::dynamic_pointer_cast<ConstDefNode>(const_def_ast_node);
+        llvm::Value *val = this->_ctx._named_values[const_def_node->_ident];
+        if (val == nullptr || !val->getType()->isIntOrIntVectorTy(64)) {
+            CodeGenContext::LogError("const define: type violates");
+            exit(1);
+        }
+    }
+    return nullptr;
+}
+llvm::Value *CodeGenBase::codeGenConstDef(std::shared_ptr<ASTNode> node) {
+    auto const_def_node = std::dynamic_pointer_cast<ConstDefNode>(node);
+    llvm::Value *val = this->_ctx._named_values[const_def_node->_ident];
+    if (val != nullptr) {
+        CodeGenContext::LogError(("const define: const " + const_def_node->_ident + " has been defined").c_str());
+        exit(1);
+    }
+    this->_ctx._named_values[const_def_node->_ident] = this->codeGenConstInitVal(const_def_node->_const_init_val);
+    return nullptr;
+}
+llvm::Value *CodeGenBase::codeGenConstInitVal(std::shared_ptr<ASTNode> node) {
+    auto const_init_val_node = std::dynamic_pointer_cast<ConstInitValNode>(node);
+    return this->codeGenConstExp(const_init_val_node->_const_exp);
+}
+llvm::Value *CodeGenBase::codeGenConstExp(std::shared_ptr<ASTNode> node) {
+    auto const_exp_node = std::dynamic_pointer_cast<ConstExpNode>(node);
+    return this->codeGenExp(const_exp_node->_exp);
 }
 } //namespace l24

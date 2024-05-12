@@ -62,18 +62,24 @@ public:
     virtual llvm::Value *codeGenLandExp(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenEqExp(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenRelExp(std::shared_ptr<ASTNode> node) = 0;
-
+    virtual llvm::Value *codeGenBlockItem(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenDecl(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenConstDecl(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenConstDef(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenConstInitVal(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenConstExp(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenLVal(std::shared_ptr<ASTNode> node) = 0;
 };
 
 class CodeGenBase : public CodeGen {
 private:
     CodeGenContext _ctx;
-    llvm::Value *intToBoolean(llvm::Value *val) {
+    llvm::Value *intToBoolean(llvm::Value *val) const {
         llvm::Value *zero = llvm::ConstantInt::get(*(this->_ctx._context), llvm::APInt(64, 0, false));
         return (this->_ctx._builder)->CreateICmpNE(zero, val);
     }
 
-    llvm::Value *booleanToInt(llvm::Value *val) {
+    llvm::Value *booleanToInt(llvm::Value *val) const {
         return (this->_ctx._builder)->CreateIntCast(val, llvm::Type::getInt64Ty(*(this->_ctx._context)), false);
     }
 public:
@@ -85,6 +91,13 @@ public:
     llvm::Value *codeGenRelExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenUnaryExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenAddExp(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenBlockItem(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenDecl(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenConstDecl(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenConstDef(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenConstInitVal(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenConstExp(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenLVal(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenMulExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenPrimaryExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenProgram(std::shared_ptr<ASTNode> node) override;

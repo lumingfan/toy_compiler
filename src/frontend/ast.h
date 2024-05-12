@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <memory>
+
 #include "llvm/IR/Value.h"
 
 namespace l24 {
@@ -35,7 +36,45 @@ public:
 
 class BlockNode : public ASTNode {
 public:
+    std::vector<std::shared_ptr<ASTNode>> _block_items;
+};
+
+class BlockItemNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _decl;
     std::shared_ptr<ASTNode> _stmt;
+};
+
+class DeclNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _const_decl;
+};
+
+class ConstDeclNode : public ASTNode {
+public:
+    std::string _b_type;
+    std::vector<std::shared_ptr<ASTNode>> _const_defs;
+};
+
+class ConstDefNode : public ASTNode {
+public:
+    std::string _ident;
+    std::shared_ptr<ASTNode> _const_init_val;
+};
+
+class ConstInitValNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _const_exp;
+};
+
+class ConstExpNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _exp;
+};
+
+class LValNode : public ASTNode {
+public:
+    std::shared_ptr<IdentNode> _ident;
 };
 
 class StmtNode : public ASTNode {
@@ -106,6 +145,7 @@ class PrimExprNode : public ASTNode {
 public:
     std::shared_ptr<ASTNode> _expr;
     std::shared_ptr<ASTNode> _number;
+    std::shared_ptr<ASTNode> _l_val;
 };
 
 class NumberNode : public ASTNode {
