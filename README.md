@@ -20,6 +20,25 @@ export LDFLAGS="-L/opt/homebrew/Cellar/llvm/18.1.5/lib"
 export CPPFLAGS="-I/opt/homebrew/Cellar/llvm/18.1.5/include"
 ```
 
+如果你遇到下述问题,
+
+![img.png](docs/img/img.png)
+
+参考[how-to-use-llvm-target-initialize-function](https://stackoverflow.com/questions/71867265/how-to-use-llvm-target-initialize-function)修改CMakeLists.txt
+
+```cmake
+set(LLVM_LINK_COMPONENTS
+        ${LLVM_TARGETS_TO_BUILD}
+)
+
+llvm_map_components_to_libnames(llvm_libs Core ExecutionEngine IRReader Passes Support TransformUtils native AsmParser ${LLVM_LINK_COMPONENTS})
+```
+
+并在使用 cmake build 的时候设置参数:
+```shell
+cmake .. -DLLVM_TARGETS_TO_BUILD=all  
+```
+
 
 # 参考资料
 

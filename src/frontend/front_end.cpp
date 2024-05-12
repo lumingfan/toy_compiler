@@ -41,8 +41,10 @@ std::shared_ptr<ASTNode> FrontEnd::parse(std::istream& stream) {
      LLVM_DEBUG({
         llvm::outs() << "===== Parser ===== \n";
         llvm::outs() << Program->toStringTree(&Parser, true) << "\n";
-        if (Parser.getNumberOfSyntaxErrors())
+        if (Parser.getNumberOfSyntaxErrors()) {
             llvm::errs() << "===== Parser Failed ===== \n";
+            return nullptr;
+        }
      });
 
     ASTBuilder builder;

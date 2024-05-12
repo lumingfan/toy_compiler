@@ -25,9 +25,12 @@ public:
     std::any visitStmt(l24Parser::StmtContext *ctx) override;
     std::any visitNumber(l24Parser::NumberContext *ctx) override;
     std::any visitExp(l24Parser::ExpContext *ctx) override;
+    std::any visitAddExp(l24Parser::AddExpContext *ctx) override;
+    std::any visitMulExp(l24Parser::MulExpContext *ctx) override;
     std::any visitUnaryExp(l24Parser::UnaryExpContext *ctx) override;
     std::any visitUnaryOp(l24Parser::UnaryOpContext *ctx) override;
     std::any visitPrimaryExp(l24Parser::PrimaryExpContext *ctx) override;
+
 
 
 };

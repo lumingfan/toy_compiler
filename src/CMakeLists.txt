@@ -4,6 +4,7 @@ add_subdirectory(frontend)
 # add_subdirectory(codegen)
 # add_subdirectory(optimizer)
 
+
 # configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h @ONLY)
 
 # include antlr generated files
@@ -15,13 +16,14 @@ add_executable(l24
     ${ANTLR_l24Grammar_CXX_OUTPUTS}
 )
 
+
 target_link_libraries(l24 PRIVATE frontend
-                                    #  semantic
-                                    #  ircodegen
-                                    #  asmcodegen
-                                    #  optimizer
-                                     antlr4_static
-                                     ${llvm_libs}
+        #  semantic
+        #  ircodegen
+        #  asmcodegen
+        #  optimizer
+        antlr4_static
+        ${llvm_libs}
 )
 
 # runtime

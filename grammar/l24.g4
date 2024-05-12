@@ -22,6 +22,7 @@ AssignmentOP:       '=' ;
 RelationalOP:       '>'|'>='|'<' |'<=' | '!=' | '==';    
 Star:               '*';
 Slash:              '/';
+Percentage:         '%';
 Plus:               '+';
 Minus:              '-';
 SemiColon:          ';';
@@ -65,8 +66,19 @@ stmt
     ;
 
 exp
-    : unaryExp
+    : addExp
     ;
+
+addExp
+    : mulExp
+    | addExp '+' mulExp
+    | addExp '-' mulExp;
+
+mulExp
+    : unaryExp
+    | mulExp '*' unaryExp
+    | mulExp '/' unaryExp
+    | mulExp '%' unaryExp;
 
 unaryExp
     : primaryExp

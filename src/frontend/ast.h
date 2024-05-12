@@ -45,7 +45,21 @@ public:
 
 class ExprNode : public ASTNode {
 public:
+    std::shared_ptr<ASTNode> _add_expr;
+};
+
+class AddExprNode : public ASTNode {
+public:
+    char _op{'\0'};
+    std::shared_ptr<ASTNode> _mul_expr;
+    std::shared_ptr<ASTNode> _add_expr;
+};
+
+class MulExprNode : public ASTNode {
+public:
+    char _op{'\0'};
     std::shared_ptr<ASTNode> _unary_expr;
+    std::shared_ptr<ASTNode> _mul_expr;
 };
 
 class UnaryExprNode : public ASTNode {

@@ -40,6 +40,7 @@ int main(int argc, const char *argv[]) {
 
     CodeGenBase cgb;
     cgb.codeGenProgram(prog_node);
+    cgb.asmGen();
 
     return 0;
 }

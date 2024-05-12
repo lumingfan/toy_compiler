@@ -42,7 +42,7 @@ std::any ASTBuilder::visitNumber(l24Parser::NumberContext *ctx) {
 }
 std::any ASTBuilder::visitExp(l24Parser::ExpContext *ctx) {
     auto expr = std::make_shared<ExprNode>();
-    expr->_unary_expr = std::move(std::any_cast<std::shared_ptr<UnaryExprNode>>(visitUnaryExp(ctx->unaryExp())));
+    expr->_add_expr = std::move(std::any_cast<std::shared_ptr<AddExprNode>>(visitAddExp(ctx->addExp())));
     return expr;
 }
 std::any ASTBuilder::visitUnaryExp(l24Parser::UnaryExpContext *ctx) {
@@ -81,6 +81,38 @@ std::any ASTBuilder::visitPrimaryExp(l24Parser::PrimaryExpContext *ctx) {
         ASTBuilder::BuildError("PrimaryExp build failed");
     }
     return prim_exp;
+}
+std::any ASTBuilder::visitAddExp(l24Parser::AddExpContext *ctx) {
+    auto add_exp = std::make_shared<AddExprNode>();
+    if (ctx->Plus() || ctx->Minus()) {
+        if (ctx->Plus()) {
+            add_exp->_op = ctx->Plus()->getText()[0];
+        } else {
+            add_exp->_op = ctx->Minus()->getText()[0];
+        }
+        add_exp->_add_expr = std::move(std::any_cast<std::shared_ptr<AddExprNode>>(visitAddExp(ctx->addExp())));
+        add_exp->_mul_expr = std::move(std::any_cast<std::shared_ptr<MulExprNode>>(visitMulExp(ctx->mulExp())));
+    } else {
+        add_exp->_mul_expr = std::move(std::any_cast<std::shared_ptr<MulExprNode>>(visitMulExp(ctx->mulExp())));
+    }
+    return add_exp;
+}
+std::any ASTBuilder::visitMulExp(l24Parser::MulExpContext *ctx) {
+    auto mul_exp = std::make_shared<MulExprNode>();
+    if (ctx->Slash() || ctx->Star() || ctx->Percentage()) {
+        if (ctx->Slash()) {
+            mul_exp->_op = ctx->Slash()->getText()[0];
+        } else if (ctx->Star()) {
+            mul_exp->_op = ctx->Star()->getText()[0];
+        } else {
+            mul_exp->_op = ctx->Percentage()->getText()[0];
+        }
+        mul_exp->_unary_expr = std::move(std::any_cast<std::shared_ptr<UnaryExprNode>>(visitUnaryExp(ctx->unaryExp())));
+        mul_exp->_mul_expr = std::move(std::any_cast<std::shared_ptr<MulExprNode>>(visitMulExp(ctx->mulExp())));
+    } else {
+        mul_exp->_unary_expr = std::move(std::any_cast<std::shared_ptr<UnaryExprNode>>(visitUnaryExp(ctx->unaryExp())));
+    }
+    return mul_exp;
 }
 
 } // namespace l24

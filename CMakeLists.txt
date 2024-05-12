@@ -37,13 +37,22 @@ find_package(ANTLR REQUIRED)
 
 ######## LLVM ###########
 find_package(LLVM REQUIRED CONFIG)
+
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-llvm_map_components_to_libnames(llvm_libs Core ExecutionEngine IRReader Passes Support TransformUtils native)
+set(LLVM_LINK_COMPONENTS
+        ${LLVM_TARGETS_TO_BUILD}
+)
+
+llvm_map_components_to_libnames(llvm_libs Core ExecutionEngine IRReader Passes Support TransformUtils native AsmParser ${LLVM_LINK_COMPONENTS})
+
+message(STATUS "Found llvm_libs ${llvm_libs}")
+message(STATUS "llvm_link_Components ${LLVM_LINK_COMPONENTS}")
+
 
 ######## Build l24 ###########
 include_directories(src)

@@ -1,11 +1,60 @@
 #include "frontend/code_gen.h"
 
 namespace l24 {
+void CodeGenBase::asmGen() {
+    // Initialize the target registry etc.
+    llvm::InitializeAllTargetInfos();
+    llvm::InitializeAllTargets();
+    llvm::InitializeAllTargetMCs();
+    llvm::InitializeAllAsmParsers();
+    llvm::InitializeAllAsmPrinters();
+    auto TargetTriple = llvm::sys::getDefaultTargetTriple();
+    (_ctx._module)->setTargetTriple(TargetTriple);
+
+    std::string Error;
+    auto Target = llvm::TargetRegistry::lookupTarget(TargetTriple, Error);
+
+    // Print an error and exit if we couldn't find the requested target.
+    // This generally occurs if we've forgotten to initialise the
+    // TargetRegistry or we have a bogus target triple.
+    if (!Target) {
+        llvm::errs() << Error;
+        return ;
+    }
+
+    auto CPU = "generic";
+    auto Features = "";
+
+    llvm::TargetOptions opt;
+    auto TheTargetMachine = Target->createTargetMachine(
+        TargetTriple, CPU, Features, opt, llvm::Reloc::PIC_);
+
+    (this->_ctx._module)->setDataLayout(TheTargetMachine->createDataLayout());
+
+    auto Filename = "output.S";
+    std::error_code EC;
+    llvm::raw_fd_ostream dest(Filename, EC, llvm::sys::fs::OF_None);
+
+    if (EC) {
+        llvm::errs() << "Could not open file: " << EC.message();
+    }
+
+    llvm::legacy::PassManager pass;
+    auto FileType = llvm::CodeGenFileType::AssemblyFile;
+
+    if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType)) {
+        llvm::errs() << "TheTargetMachine can't emit a file of this type";
+        return ;
+    }
+
+    pass.run(*(this->_ctx._module));
+    dest.flush();
+}
 
 llvm::Value *CodeGenBase::codeGenProgram(std::shared_ptr<ASTNode> node) {
     auto prog_node = std::dynamic_pointer_cast<ProgNode>(node);
     this->codeGenFunc(prog_node->_func);
-    this->_ctx._module->print(llvm::outs(), nullptr);
+    this->_ctx._module->print(llvm::errs(), nullptr);
     return nullptr;
 }
 llvm::Value *CodeGenBase::codeGenFunc(std::shared_ptr<ASTNode> node) {
@@ -53,7 +102,7 @@ llvm::Value *CodeGenBase::codeGenNumber(std::shared_ptr<ASTNode> node) {
 }
 llvm::Value *CodeGenBase::codeGenExp(std::shared_ptr<ASTNode> node) {
     auto expr_node = std::dynamic_pointer_cast<ExprNode>(node);
-    return this->codeGenUnaryExp(expr_node->_unary_expr);
+    return this->codeGenAddExp(expr_node->_add_expr);
 }
 llvm::Value *CodeGenBase::codeGenUnaryExp(std::shared_ptr<ASTNode> node) {
     auto unary_node = std::dynamic_pointer_cast<UnaryExprNode>(node);
@@ -66,7 +115,7 @@ llvm::Value *CodeGenBase::codeGenUnaryExp(std::shared_ptr<ASTNode> node) {
         if (op == "+") {
             return val;
         } else if (op == "-") {
-            return (this->_ctx._builder)->CreateNeg(val, "sub_tmp");
+            return (this->_ctx._builder)->CreateNeg(val, "unary_sub_tmp");
         } else if (op == "!") {
             llvm::Value *zero = llvm::ConstantInt::get(*(this->_ctx._context), llvm::APInt(64, 0, false));
             llvm::Value *bool_val =  (this->_ctx._builder)->CreateICmpEQ(zero, val);
@@ -84,5 +133,35 @@ llvm::Value *CodeGenBase::codeGenPrimaryExp(std::shared_ptr<ASTNode> node) {
         return this->codeGenNumber(prim_exp_node->_number);
     }
     return nullptr;
+}
+llvm::Value *CodeGenBase::codeGenAddExp(std::shared_ptr<ASTNode> node) {
+    auto add_exp_node = std::dynamic_pointer_cast<AddExprNode>(node);
+    if (add_exp_node->_op != '\0') {
+        llvm::Value *lv = this->codeGenAddExp(add_exp_node->_add_expr);
+        llvm::Value *rv = this->codeGenMulExp(add_exp_node->_mul_expr) ;
+        switch (add_exp_node->_op) {
+        case '+':
+            return (this->_ctx._builder)->CreateAdd(lv, rv, "add_temp");
+        case '-':
+            return (this->_ctx._builder)->CreateSub(lv, rv, "bin_sub_temp");
+        }
+    }
+    return this->codeGenMulExp(add_exp_node->_mul_expr);
+}
+llvm::Value *CodeGenBase::codeGenMulExp(std::shared_ptr<ASTNode> node) {
+    auto mul_exp_node = std::dynamic_pointer_cast<MulExprNode>(node);
+    if (mul_exp_node->_op != '\0') {
+        llvm::Value *lv = this->codeGenMulExp(mul_exp_node->_mul_expr);
+        llvm::Value *rv = this->codeGenUnaryExp(mul_exp_node->_unary_expr);
+        switch(mul_exp_node->_op) {
+        case '*':
+            return (this->_ctx._builder)->CreateMul(lv, rv, "mul_tmp");
+        case '/':
+            return (this->_ctx._builder)->CreateSDiv(lv, rv, "div_tmp");
+        case '%':
+            return (this->_ctx._builder)->CreateSRem(lv, rv, "rem_tmp");
+        }
+    }
+    return this->codeGenUnaryExp(mul_exp_node->_unary_expr);
 }
 } //namespace l24

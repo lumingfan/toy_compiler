@@ -9,6 +9,17 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/LegacyPassManager.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/FileSystem.h"
+
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
+
+#include "llvm/TargetParser/Host.h"
+#include "llvm/MC/TargetRegistry.h"
 
 
 #include "frontend/ast.h"
@@ -42,6 +53,8 @@ public:
     virtual llvm::Value *codeGenBlock(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenStmt(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenExp(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenAddExp(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenMulExp(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenUnaryExp(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenPrimaryExp(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenNumber(std::shared_ptr<ASTNode> node) = 0;
@@ -51,8 +64,11 @@ class CodeGenBase : public CodeGen {
 private:
     CodeGenContext _ctx;
 public:
+    void asmGen();
     llvm::Value *codeGenExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenUnaryExp(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenAddExp(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenMulExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenPrimaryExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenProgram(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenFunc(std::shared_ptr<ASTNode> node) override;
