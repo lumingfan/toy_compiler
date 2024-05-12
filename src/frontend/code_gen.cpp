@@ -102,7 +102,7 @@ llvm::Value *CodeGenBase::codeGenNumber(std::shared_ptr<ASTNode> node) {
 }
 llvm::Value *CodeGenBase::codeGenExp(std::shared_ptr<ASTNode> node) {
     auto expr_node = std::dynamic_pointer_cast<ExprNode>(node);
-    return this->codeGenAddExp(expr_node->_add_expr);
+    return this->codeGenLorExp(expr_node->_lor_expr);
 }
 llvm::Value *CodeGenBase::codeGenUnaryExp(std::shared_ptr<ASTNode> node) {
     auto unary_node = std::dynamic_pointer_cast<UnaryExprNode>(node);
@@ -118,8 +118,7 @@ llvm::Value *CodeGenBase::codeGenUnaryExp(std::shared_ptr<ASTNode> node) {
             return (this->_ctx._builder)->CreateNeg(val, "unary_sub_tmp");
         } else if (op == "!") {
             llvm::Value *zero = llvm::ConstantInt::get(*(this->_ctx._context), llvm::APInt(64, 0, false));
-            llvm::Value *bool_val =  (this->_ctx._builder)->CreateICmpEQ(zero, val);
-            return (this->_ctx._builder)->CreateIntCast(bool_val, llvm::Type::getInt64Ty(*(this->_ctx._context)), false);
+            return this->booleanToInt((this->_ctx._builder)->CreateICmpEQ(zero, val));
         }
     }
     return nullptr;
@@ -163,5 +162,54 @@ llvm::Value *CodeGenBase::codeGenMulExp(std::shared_ptr<ASTNode> node) {
         }
     }
     return this->codeGenUnaryExp(mul_exp_node->_unary_expr);
+}
+llvm::Value *CodeGenBase::codeGenLorExp(std::shared_ptr<ASTNode> node) {
+    auto lor_exp_node = std::dynamic_pointer_cast<LorExprNode>(node);
+    if (lor_exp_node->_land_expr && lor_exp_node->_lor_expr) {
+        llvm::Value *lv = this->intToBoolean(this->codeGenLorExp(lor_exp_node->_lor_expr));
+        llvm::Value *rv = this->intToBoolean(this->codeGenLandExp(lor_exp_node->_land_expr));
+        return this->booleanToInt((this->_ctx._builder)->CreateLogicalOr(lv, rv));
+    }
+    return this->codeGenLandExp(lor_exp_node->_land_expr);
+}
+llvm::Value *CodeGenBase::codeGenLandExp(std::shared_ptr<ASTNode> node) {
+    auto land_exp_node = std::dynamic_pointer_cast<LandExprNode>(node);
+    if (land_exp_node->_land_expr && land_exp_node->_eq_expr) {
+        llvm::Value *lv = this->intToBoolean(this->codeGenLandExp(land_exp_node->_land_expr));
+        llvm::Value *rv = this->intToBoolean(this->codeGenEqExp(land_exp_node->_eq_expr));
+        return this->booleanToInt((this->_ctx._builder)->CreateLogicalAnd(lv, rv));
+    }
+    return this->codeGenEqExp(land_exp_node->_eq_expr);
+}
+llvm::Value *CodeGenBase::codeGenEqExp(std::shared_ptr<ASTNode> node) {
+    auto eq_exp_node = std::dynamic_pointer_cast<EqExprNode>(node);
+    if (eq_exp_node->_eq_expr && eq_exp_node->_rel_expr) {
+        llvm::Value *lv = this->codeGenEqExp(eq_exp_node->_eq_expr);
+        llvm::Value *rv = this->codeGenRelExp(eq_exp_node->_rel_expr);
+        if (eq_exp_node->op == "==") {
+            return this->booleanToInt((this->_ctx._builder)->CreateICmpEQ(lv, rv));
+        } else {
+            return this->booleanToInt((this->_ctx._builder)->CreateICmpNE(lv, rv));
+        }
+    }
+    return this->codeGenRelExp(eq_exp_node->_rel_expr);
+}
+llvm::Value *CodeGenBase::codeGenRelExp(std::shared_ptr<ASTNode> node) {
+    auto rel_exp_node = std::dynamic_pointer_cast<RelExprNode>(node);
+    if (rel_exp_node->_rel_expr && rel_exp_node->_add_expr) {
+        llvm::Value *lv = this->codeGenRelExp(rel_exp_node->_rel_expr);
+        llvm::Value *rv = this->codeGenAddExp(rel_exp_node->_add_expr);
+
+        if (rel_exp_node->op == "<") {
+            return this->booleanToInt((this->_ctx._builder)->CreateICmpSLT(lv, rv));
+        } else if (rel_exp_node->op == ">") {
+            return this->booleanToInt((this->_ctx._builder)->CreateICmpSGT(lv, rv));
+        } else if (rel_exp_node->op == "<=") {
+            return this->booleanToInt((this->_ctx._builder)->CreateICmpSLE(lv, rv));
+        } else {
+            return this->booleanToInt((this->_ctx._builder)->CreateICmpSGE(lv, rv));
+        }
+    }
+    return this->codeGenAddExp(rel_exp_node->_add_expr);
 }
 } //namespace l24

@@ -30,7 +30,10 @@ public:
     std::any visitUnaryExp(l24Parser::UnaryExpContext *ctx) override;
     std::any visitUnaryOp(l24Parser::UnaryOpContext *ctx) override;
     std::any visitPrimaryExp(l24Parser::PrimaryExpContext *ctx) override;
-
+    std::any visitLOrExp(l24Parser::LOrExpContext *ctx) override;
+    std::any visitLAndExp(l24Parser::LAndExpContext *ctx) override;
+    std::any visitEqExp(l24Parser::EqExpContext *ctx) override;
+    std::any visitRelExp(l24Parser::RelExpContext *ctx) override;
 
 
 };

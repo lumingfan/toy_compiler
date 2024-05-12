@@ -42,7 +42,7 @@ std::any ASTBuilder::visitNumber(l24Parser::NumberContext *ctx) {
 }
 std::any ASTBuilder::visitExp(l24Parser::ExpContext *ctx) {
     auto expr = std::make_shared<ExprNode>();
-    expr->_add_expr = std::move(std::any_cast<std::shared_ptr<AddExprNode>>(visitAddExp(ctx->addExp())));
+    expr->_lor_expr = std::move(std::any_cast<std::shared_ptr<LorExprNode>>(visitLOrExp(ctx->lOrExp())));
     return expr;
 }
 std::any ASTBuilder::visitUnaryExp(l24Parser::UnaryExpContext *ctx) {
@@ -113,6 +113,60 @@ std::any ASTBuilder::visitMulExp(l24Parser::MulExpContext *ctx) {
         mul_exp->_unary_expr = std::move(std::any_cast<std::shared_ptr<UnaryExprNode>>(visitUnaryExp(ctx->unaryExp())));
     }
     return mul_exp;
+}
+std::any ASTBuilder::visitLOrExp(l24Parser::LOrExpContext *ctx) {
+    auto lor_expr = std::make_shared<LorExprNode>();
+    if (ctx->lAndExp() && ctx->lOrExp()) {
+        lor_expr->_land_expr = std::move(std::any_cast<std::shared_ptr<LandExprNode>>(visitLAndExp(ctx->lAndExp())));
+        lor_expr->_lor_expr = std::move(std::any_cast<std::shared_ptr<LorExprNode>>(visitLOrExp(ctx->lOrExp())));
+    } else {
+        lor_expr->_land_expr = std::move(std::any_cast<std::shared_ptr<LandExprNode>>(visitLAndExp(ctx->lAndExp())));
+    }
+    return lor_expr;
+}
+std::any ASTBuilder::visitLAndExp(l24Parser::LAndExpContext *ctx) {
+    auto land_expr = std::make_shared<LandExprNode>();
+    if (ctx->lAndExp() && ctx->eqExp()) {
+        land_expr->_land_expr = std::move(std::any_cast<std::shared_ptr<LandExprNode>>(visitLAndExp(ctx->lAndExp())));
+        land_expr->_eq_expr = std::move(std::any_cast<std::shared_ptr<EqExprNode>>(visitEqExp(ctx->eqExp())));
+    } else {
+        land_expr->_eq_expr = std::move(std::any_cast<std::shared_ptr<EqExprNode>>(visitEqExp(ctx->eqExp())));
+    }
+    return land_expr;
+}
+std::any ASTBuilder::visitEqExp(l24Parser::EqExpContext *ctx) {
+    auto eq_expr = std::make_shared<EqExprNode>();
+    if (ctx->eqExp() && ctx->relExp()) {
+        if (ctx->Eq()) {
+            eq_expr->op = ctx->Eq()->getText();
+        } else {
+            eq_expr->op = ctx->NotEq()->getText();
+        }
+        eq_expr->_rel_expr = std::move(std::any_cast<std::shared_ptr<RelExprNode>>(visitRelExp(ctx->relExp())));
+        eq_expr->_eq_expr = std::move(std::any_cast<std::shared_ptr<EqExprNode>>(visitEqExp(ctx->eqExp())));
+    } else {
+        eq_expr->_rel_expr = std::move(std::any_cast<std::shared_ptr<RelExprNode>>(visitRelExp(ctx->relExp())));
+    }
+    return eq_expr;
+}
+std::any ASTBuilder::visitRelExp(l24Parser::RelExpContext *ctx) {
+    auto rel_expr = std::make_shared<RelExprNode>();
+    if (ctx->relExp() && ctx->addExp()) {
+        if (ctx->Less()) {
+            rel_expr->op = ctx->Less()->getText();
+        } else if (ctx->Greater()){
+            rel_expr->op = ctx->Greater()->getText();
+        } else if (ctx->LessEq()) {
+            rel_expr->op = ctx->LessEq()->getText();
+        } else {
+            rel_expr->op = ctx->GreaterEq()->getText();
+        }
+        rel_expr->_add_expr = std::move(std::any_cast<std::shared_ptr<AddExprNode>>(visitAddExp(ctx->addExp())));
+        rel_expr->_rel_expr = std::move(std::any_cast<std::shared_ptr<RelExprNode>>(visitRelExp(ctx->relExp())));
+    } else {
+        rel_expr->_add_expr = std::move(std::any_cast<std::shared_ptr<AddExprNode>>(visitAddExp(ctx->addExp())));
+    }
+    return rel_expr;
 }
 
 } // namespace l24

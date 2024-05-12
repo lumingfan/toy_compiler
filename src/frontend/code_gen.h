@@ -58,14 +58,31 @@ public:
     virtual llvm::Value *codeGenUnaryExp(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenPrimaryExp(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenNumber(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenLorExp(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenLandExp(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenEqExp(std::shared_ptr<ASTNode> node) = 0;
+    virtual llvm::Value *codeGenRelExp(std::shared_ptr<ASTNode> node) = 0;
+
 };
 
 class CodeGenBase : public CodeGen {
 private:
     CodeGenContext _ctx;
+    llvm::Value *intToBoolean(llvm::Value *val) {
+        llvm::Value *zero = llvm::ConstantInt::get(*(this->_ctx._context), llvm::APInt(64, 0, false));
+        return (this->_ctx._builder)->CreateICmpNE(zero, val);
+    }
+
+    llvm::Value *booleanToInt(llvm::Value *val) {
+        return (this->_ctx._builder)->CreateIntCast(val, llvm::Type::getInt64Ty(*(this->_ctx._context)), false);
+    }
 public:
     void asmGen();
     llvm::Value *codeGenExp(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenLorExp(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenLandExp(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenEqExp(std::shared_ptr<ASTNode> node) override;
+    llvm::Value *codeGenRelExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenUnaryExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenAddExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenMulExp(std::shared_ptr<ASTNode> node) override;

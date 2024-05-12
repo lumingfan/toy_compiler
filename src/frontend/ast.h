@@ -45,7 +45,34 @@ public:
 
 class ExprNode : public ASTNode {
 public:
+    std::shared_ptr<ASTNode> _lor_expr;
+};
+
+class LorExprNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _land_expr;
+    std::shared_ptr<ASTNode> _lor_expr;
+};
+
+class LandExprNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _eq_expr;
+    std::shared_ptr<ASTNode> _land_expr;
+};
+
+
+class EqExprNode : public ASTNode {
+public:
+    std::string op;
+    std::shared_ptr<ASTNode> _rel_expr;
+    std::shared_ptr<ASTNode> _eq_expr;
+};
+
+class RelExprNode : public ASTNode {
+public:
+    std::string op;
     std::shared_ptr<ASTNode> _add_expr;
+    std::shared_ptr<ASTNode> _rel_expr;
 };
 
 class AddExprNode : public ASTNode {

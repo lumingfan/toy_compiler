@@ -18,8 +18,15 @@ IntLiteral : [0-9]+;
 StringLiteral:      '"' .*? '"' ;  
  
 // operator
-AssignmentOP:       '=' ;    
-RelationalOP:       '>'|'>='|'<' |'<=' | '!=' | '==';    
+Assign:             '=' ;
+Less:               '<';
+Greater:            '>';
+LessEq:             '<=';
+GreaterEq:          '>=';
+NotEq:              '!=';
+Eq:                 '==';
+LogicalAnd:         '&&';
+LogicalOr:          '||';
 Star:               '*';
 Slash:              '/';
 Percentage:         '%';
@@ -66,7 +73,30 @@ stmt
     ;
 
 exp
+    : lOrExp
+    ;
+
+lOrExp
+    : lAndExp
+    | lOrExp '||' lAndExp
+    ;
+lAndExp
+    : eqExp
+    | lAndExp '&&' eqExp
+    ;
+
+eqExp
+    : relExp
+    | eqExp '==' relExp
+    | eqExp '!=' relExp
+    ;
+
+relExp
     : addExp
+    | relExp '<' addExp
+    | relExp '>' addExp
+    | relExp '<=' addExp
+    | relExp '>=' addExp
     ;
 
 addExp
