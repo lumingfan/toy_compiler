@@ -28,12 +28,6 @@ public:
     std::shared_ptr<ASTNode> _block; 
 };
 
-class IdentNode : public ASTNode {
-public:
-    std::string _ident;
-    explicit IdentNode(std::string ident) : _ident(std::move(ident)) {}
-};
-
 class BlockNode : public ASTNode {
 public:
     std::vector<std::shared_ptr<ASTNode>> _block_items;
@@ -48,6 +42,7 @@ public:
 class DeclNode : public ASTNode {
 public:
     std::shared_ptr<ASTNode> _const_decl;
+    std::shared_ptr<ASTNode> _var_decl;
 };
 
 class ConstDeclNode : public ASTNode {
@@ -56,15 +51,32 @@ public:
     std::vector<std::shared_ptr<ASTNode>> _const_defs;
 };
 
+class VarDeclNode : public ASTNode {
+public:
+    std::string _b_type;
+    std::vector<std::shared_ptr<ASTNode>> _var_defs;
+};
+
 class ConstDefNode : public ASTNode {
 public:
     std::string _ident;
     std::shared_ptr<ASTNode> _const_init_val;
 };
 
+class VarDefNode : public ASTNode {
+public:
+    std::string _ident;
+    std::shared_ptr<ASTNode> _init_val;
+};
+
 class ConstInitValNode : public ASTNode {
 public:
     std::shared_ptr<ASTNode> _const_exp;
+};
+
+class InitValNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _exp;
 };
 
 class ConstExpNode : public ASTNode {
@@ -74,11 +86,12 @@ public:
 
 class LValNode : public ASTNode {
 public:
-    std::shared_ptr<IdentNode> _ident;
+    std::string _ident;
 };
 
 class StmtNode : public ASTNode {
 public:
+    std::string _ident;
     std::shared_ptr<ASTNode> _expr;
 };
 

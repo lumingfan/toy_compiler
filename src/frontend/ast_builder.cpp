@@ -36,6 +36,9 @@ std::any ASTBuilder::visitBlock(l24Parser::BlockContext *ctx) {
 
 std::any ASTBuilder::visitStmt(l24Parser::StmtContext *ctx) {
     auto stmt = std::make_shared<StmtNode>();
+    if (ctx->Ident()) {
+        stmt->_ident = ctx->Ident()->getText();
+    }
     stmt->_expr = std::move(std::any_cast<std::shared_ptr<ExprNode>>(visitExp(ctx->exp())));
     return stmt;
 }
@@ -183,7 +186,11 @@ std::any ASTBuilder::visitBlockItem(l24Parser::BlockItemContext *ctx) {
 
 std::any ASTBuilder::visitDecl(l24Parser::DeclContext *ctx) {
     auto decl_node = std::make_shared<DeclNode>();
-    decl_node->_const_decl = std::move(std::any_cast<std::shared_ptr<ConstDeclNode>>(visitConstDecl(ctx->constDecl())));
+    if (ctx->constDecl()) {
+        decl_node->_const_decl = std::move(std::any_cast<std::shared_ptr<ConstDeclNode>>(visitConstDecl(ctx->constDecl())));
+    } else {
+        decl_node->_var_decl = std::move(std::any_cast<std::shared_ptr<VarDeclNode>>(visitVarDecl(ctx->varDecl())));
+    }
     return decl_node;
 }
 
@@ -196,6 +203,14 @@ std::any ASTBuilder::visitConstDecl(l24Parser::ConstDeclContext *ctx) {
     return const_decl_node;
 }
 
+std::any ASTBuilder::visitVarDecl(l24Parser::VarDeclContext *ctx)  {
+    auto var_decl_node = std::make_shared<VarDeclNode>();
+    var_decl_node->_b_type = ctx->bType()->Int()->getText();
+    for (auto var_def_ctx : ctx->varDef()) {
+        var_decl_node->_var_defs.push_back(std::move(std::any_cast<std::shared_ptr<VarDefNode>>(visitVarDef(var_def_ctx))));
+    }
+    return var_decl_node;
+}
 std::any ASTBuilder::visitConstDef(l24Parser::ConstDefContext *ctx) {
     auto const_def_node = std::make_shared<ConstDefNode>();
     const_def_node->_ident = ctx->Ident()->getText();
@@ -203,10 +218,24 @@ std::any ASTBuilder::visitConstDef(l24Parser::ConstDefContext *ctx) {
     return const_def_node;
 }
 
+std::any ASTBuilder::visitVarDef(l24Parser::VarDefContext *ctx) {
+    auto var_def_node = std::make_shared<VarDefNode>();
+    var_def_node->_ident = ctx->Ident()->getText();
+    if (ctx->initVal()) {
+        var_def_node->_init_val = std::move(std::any_cast<std::shared_ptr<InitValNode>>(visitInitVal(ctx->initVal())));
+    }
+    return var_def_node;
+}
+
 std::any ASTBuilder::visitConstInitVal(l24Parser::ConstInitValContext *ctx) {
     auto const_init_val_node = std::make_shared<ConstInitValNode>();
     const_init_val_node->_const_exp = std::move(std::any_cast<std::shared_ptr<ConstExpNode>>(visitConstExp(ctx->constExp())));
     return const_init_val_node;
+}
+std::any ASTBuilder::visitInitVal(l24Parser::InitValContext *ctx) {
+    auto init_val_node = std::make_shared<InitValNode>();
+    init_val_node->_exp = std::move(std::any_cast<std::shared_ptr<ExprNode>>(visitExp(ctx->exp())));
+    return init_val_node;
 }
 
 std::any ASTBuilder::visitConstExp(l24Parser::ConstExpContext *ctx) {
@@ -216,7 +245,7 @@ std::any ASTBuilder::visitConstExp(l24Parser::ConstExpContext *ctx) {
 }
 std::any ASTBuilder::visitLVal(l24Parser::LValContext *ctx) {
     auto l_val_node = std::make_shared<LValNode>();
-    l_val_node->_ident = std::make_shared<IdentNode>(ctx->Ident()->getText());
+    l_val_node->_ident = ctx->Ident()->getText();
     return l_val_node;
 }
 

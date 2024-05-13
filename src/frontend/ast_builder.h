@@ -25,8 +25,12 @@ public:
     std::any visitBlockItem(l24Parser::BlockItemContext *ctx) override;
     std::any visitDecl(l24Parser::DeclContext *ctx) override;
     std::any visitConstDecl(l24Parser::ConstDeclContext *ctx) override;
+    std::any visitVarDecl(l24Parser::VarDeclContext *ctx) override;
     std::any visitConstDef(l24Parser::ConstDefContext *ctx) override;
+    std::any visitVarDef(l24Parser::VarDefContext *ctx) override;
     std::any visitConstInitVal(l24Parser::ConstInitValContext *ctx) override;
+    std::any visitInitVal(l24Parser::InitValContext *ctx) override;
+
     std::any visitConstExp(l24Parser::ConstExpContext *ctx) override;
     std::any visitStmt(l24Parser::StmtContext *ctx) override;
     std::any visitNumber(l24Parser::NumberContext *ctx) override;

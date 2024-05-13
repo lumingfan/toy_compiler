@@ -1,7 +1,7 @@
 #include "frontend/code_gen.h"
 
 namespace l24 {
-void CodeGenBase::asmGen() {
+void CodeGenBase::asmGen() const {
     // Initialize the target registry etc.
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
@@ -81,29 +81,34 @@ llvm::Value *CodeGenBase::codeGenFunc(std::shared_ptr<ASTNode> node) {
 }
 llvm::Value *CodeGenBase::codeGenLVal(std::shared_ptr<ASTNode> node) {
     auto l_val_node = std::dynamic_pointer_cast<LValNode>(node);
-    return codeGenIdent(l_val_node->_ident);
-}
-
-llvm::Value *CodeGenBase::codeGenIdent(std::shared_ptr<ASTNode> node) {
-    auto ident_node = std::dynamic_pointer_cast<IdentNode>(node);
-    llvm::Value *val = this->_ctx._named_values[ident_node->_ident];
+    llvm::Value *val = this->_ctx.getValue(l_val_node->_ident, CodeGenContext::ValType::ANY);
     if (val == nullptr) {
-        CodeGenContext::LogError("Unknown variable name");
-        exit(1);
+        CodeGenContext::LogError("Ident: " + l_val_node->_ident + " hasn't been declared");
     }
     return val;
 }
+
 llvm::Value *CodeGenBase::codeGenBlock(std::shared_ptr<ASTNode> node) {
     auto block_node = std::dynamic_pointer_cast<BlockNode>(node);
     llvm::Value *ret_val = nullptr;
-    for (auto blk_item_node : block_node->_block_items) {
+    for (const auto& blk_item_node : block_node->_block_items) {
         ret_val = this->codeGenBlockItem(blk_item_node);
     }
     return ret_val;
 }
 llvm::Value *CodeGenBase::codeGenStmt(std::shared_ptr<ASTNode> node) {
     auto stmt_node = std::dynamic_pointer_cast<StmtNode>(node);
-    return this->codeGenExp(stmt_node->_expr);
+    llvm::Value *new_val = this->codeGenExp(stmt_node->_expr);
+    if (stmt_node->_ident.empty()) {
+        return new_val;
+    }
+    llvm::Value *val = this->_ctx.getValue(stmt_node->_ident, CodeGenContext::ValType::VAR);
+    if (val == nullptr) {
+        CodeGenContext::LogError("variable: " + stmt_node->_ident + " hasn't been declared");
+    }
+
+    this->_ctx.setValue(stmt_node->_ident, CodeGenContext::ValType::VAR, new_val);
+    return new_val;
 }
 llvm::Value *CodeGenBase::codeGenNumber(std::shared_ptr<ASTNode> node) {
     auto number_node = std::dynamic_pointer_cast<NumberNode>(node);
@@ -232,29 +237,30 @@ llvm::Value *CodeGenBase::codeGenBlockItem(std::shared_ptr<ASTNode> node) {
 }
 llvm::Value *CodeGenBase::codeGenDecl(std::shared_ptr<ASTNode> node) {
     auto decl_node = std::dynamic_pointer_cast<DeclNode>(node);
-    return this->codeGenConstDecl(decl_node->_const_decl);
+    if (decl_node->_const_decl) {
+        return this->codeGenConstDecl(decl_node->_const_decl);
+    }
+    return this->codeGenVarDecl(decl_node->_var_decl);
 }
 llvm::Value *CodeGenBase::codeGenConstDecl(std::shared_ptr<ASTNode> node) {
     auto const_decl_node = std::dynamic_pointer_cast<ConstDeclNode>(node);
     for (const auto& const_def_ast_node : const_decl_node->_const_defs) {
         this->codeGenConstDef(const_def_ast_node);
         auto const_def_node = std::dynamic_pointer_cast<ConstDefNode>(const_def_ast_node);
-        llvm::Value *val = this->_ctx._named_values[const_def_node->_ident];
+        llvm::Value *val = this->_ctx.getValue(const_def_node->_ident, CodeGenContext::ValType::CONST);
         if (val == nullptr || !val->getType()->isIntOrIntVectorTy(64)) {
             CodeGenContext::LogError("const define: type violates");
-            exit(1);
         }
     }
     return nullptr;
 }
 llvm::Value *CodeGenBase::codeGenConstDef(std::shared_ptr<ASTNode> node) {
     auto const_def_node = std::dynamic_pointer_cast<ConstDefNode>(node);
-    llvm::Value *val = this->_ctx._named_values[const_def_node->_ident];
+    llvm::Value *val = this->_ctx.getValue(const_def_node->_ident, CodeGenContext::ValType::CONST);
     if (val != nullptr) {
-        CodeGenContext::LogError(("const define: const " + const_def_node->_ident + " has been defined").c_str());
-        exit(1);
+        CodeGenContext::LogError("const define: const " + const_def_node->_ident + " has been defined");
     }
-    this->_ctx._named_values[const_def_node->_ident] = this->codeGenConstInitVal(const_def_node->_const_init_val);
+    this->_ctx.setValue(const_def_node->_ident, CodeGenContext::ValType::CONST, this->codeGenConstInitVal(const_def_node->_const_init_val));
     return nullptr;
 }
 llvm::Value *CodeGenBase::codeGenConstInitVal(std::shared_ptr<ASTNode> node) {
@@ -264,5 +270,34 @@ llvm::Value *CodeGenBase::codeGenConstInitVal(std::shared_ptr<ASTNode> node) {
 llvm::Value *CodeGenBase::codeGenConstExp(std::shared_ptr<ASTNode> node) {
     auto const_exp_node = std::dynamic_pointer_cast<ConstExpNode>(node);
     return this->codeGenExp(const_exp_node->_exp);
+}
+llvm::Value *CodeGenBase::codeGenVarDecl(std::shared_ptr<ASTNode> node) {
+    auto var_decl_node = std::dynamic_pointer_cast<VarDeclNode>(node);
+    for (const auto& var_def_ast_node : var_decl_node->_var_defs) {
+        this->codeGenVarDef(var_def_ast_node);
+        auto var_def_node = std::dynamic_pointer_cast<VarDefNode>(var_def_ast_node);
+        llvm::Value *val = this->_ctx.getValue(var_def_node->_ident, CodeGenContext::ValType::VAR);
+        if (val == nullptr || !val->getType()->isIntOrIntVectorTy(64)) {
+            CodeGenContext::LogError("var define: type violates");
+        }
+    }
+    return nullptr;
+}
+llvm::Value *CodeGenBase::codeGenVarDef(std::shared_ptr<ASTNode> node) {
+    auto var_def_node = std::dynamic_pointer_cast<VarDefNode>(node);
+    llvm::Value *val = this->_ctx.getValue(var_def_node->_ident, CodeGenContext::ValType::VAR);
+    if (val != nullptr) {
+        CodeGenContext::LogError("var define: var " + var_def_node->_ident + " has been defined");
+    }
+    if (var_def_node->_init_val) {
+        this->_ctx.setValue(var_def_node->_ident, CodeGenContext::ValType::VAR, this->codeGenInitVal(var_def_node->_init_val));
+    } else {
+        this->_ctx.setValue(var_def_node->_ident, CodeGenContext::ValType::VAR, this->getInitInt());
+    }
+    return nullptr;
+}
+llvm::Value *CodeGenBase::codeGenInitVal(std::shared_ptr<ASTNode> node) {
+    auto init_val_node = std::dynamic_pointer_cast<InitValNode>(node);
+    return this->codeGenExp(init_val_node->_exp);
 }
 } //namespace l24

@@ -75,14 +75,20 @@ blockItem
 
 decl
     : constDecl
+    | varDecl
     ;
 
 stmt
-    : Return exp SemiColon
+    : 'return' exp ';'
+    | Ident '=' exp ';'
     ;
 
 constDecl
     : 'const' bType constDef (',' constDef)* ';'
+    ;
+
+varDecl
+    : bType varDef (','  varDef)* ';'
     ;
 
 bType
@@ -92,9 +98,16 @@ bType
 constDef
     : Ident '=' constInitVal
     ;
+varDef
+    : Ident
+    | Ident '=' initVal
+    ;
 
 constInitVal
     : constExp
+    ;
+initVal
+    : exp
     ;
 
 constExp
