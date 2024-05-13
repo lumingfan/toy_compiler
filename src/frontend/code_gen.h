@@ -24,95 +24,9 @@
 
 
 #include "frontend/ast.h"
+#include "frontend/code_gen_ctx.h"
 
 namespace l24 {
-
-class CodeGenContext {
-public:
-    enum ValType {
-        CONST, VAR, ANY
-    };
-    struct ConstVal {
-        llvm::Value *_val;
-        ConstVal(): _val(nullptr) {}
-        ConstVal(llvm::Value *v): _val(v) {}
-    };
-
-    struct VarVal {
-        llvm::Value *_val;
-        VarVal(): _val(nullptr) {}
-        VarVal(llvm::Value *v): _val(v) {}
-    };
-
-    std::unique_ptr<llvm::LLVMContext> _context;
-    std::unique_ptr<llvm::Module> _module;
-    std::unique_ptr<llvm::IRBuilder<>> _builder;
-    std::map<std::string, std::variant<ConstVal, VarVal>> _named_values;
-
-    CodeGenContext() {
-        _context = std::make_unique<llvm::LLVMContext>();
-        _module = std::make_unique<llvm::Module>("l24_module", *_context);
-        _builder = std::make_unique<llvm::IRBuilder<>>(*_context);
-    }
-
-    static void LogError(const std::string &str) {
-        std::cerr << "Error: " << str << std::endl;
-        exit(1);
-    }
-
-    void setValue(const std::string &ident, ValType ty, llvm::Value *val) {
-        assert(ty == ValType::CONST || ty == ValType::VAR);
-        if (this->_named_values.count(ident) == 0) {
-            switch(ty) {
-            case ValType::CONST:
-               this->_named_values[ident] = ConstVal(val);
-               break;
-            case ValType::VAR:
-                this->_named_values[ident] = VarVal(val);
-                break;
-            default:
-                LogError("you must specify var/const of this ident");
-            }
-            return ;
-        }
-
-        assert(ty == ValType::VAR);
-        try {
-            this->_named_values[ident] = VarVal(val);
-        } catch (std::bad_variant_access const& ex) {
-            LogError(ident + " is a const");
-        }
-    }
-
-    llvm::Value *getValue(const std::string& ident, ValType ty) {
-        if (this->_named_values.count(ident) == 0) {
-            return nullptr;
-        }
-        auto var_val = this->_named_values[ident];
-        try {
-            switch (ty) {
-            case ValType::VAR:
-                return std::get<VarVal>(var_val)._val;
-            default:
-                return std::get<ConstVal>(var_val)._val;
-            }
-        } catch (std::bad_variant_access const& ex) {
-            switch (ty) {
-            case ValType::CONST:
-                LogError(std::string(ex.what()) + ": contained var , not const");
-                break;
-            case ValType::VAR:
-                LogError(std::string(ex.what()) + ": contained const, not var");
-                break;
-            case ValType::ANY:
-                return std::get<VarVal>(var_val)._val;
-            }
-        }
-
-        return nullptr;
-    }
-};
-
 
 class CodeGen {
 public:

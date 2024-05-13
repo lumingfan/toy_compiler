@@ -91,8 +91,9 @@ public:
 
 class StmtNode : public ASTNode {
 public:
-    std::string _ident;
+    std::string _l_val;
     std::shared_ptr<ASTNode> _expr;
+    std::shared_ptr<ASTNode> _block;
 };
 
 class ExprNode : public ASTNode {

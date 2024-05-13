@@ -36,10 +36,16 @@ std::any ASTBuilder::visitBlock(l24Parser::BlockContext *ctx) {
 
 std::any ASTBuilder::visitStmt(l24Parser::StmtContext *ctx) {
     auto stmt = std::make_shared<StmtNode>();
-    if (ctx->Ident()) {
-        stmt->_ident = ctx->Ident()->getText();
+    if (ctx->block()) {
+        stmt->_block = std::move(std::any_cast<std::shared_ptr<BlockNode>>(visitBlock(ctx->block())));
+        return stmt;
     }
-    stmt->_expr = std::move(std::any_cast<std::shared_ptr<ExprNode>>(visitExp(ctx->exp())));
+    if (ctx->lVal()) {
+        stmt->_l_val = ctx->lVal()->Ident()->getText();
+    }
+    if (ctx->exp()) {
+        stmt->_expr = std::move(std::any_cast<std::shared_ptr<ExprNode>>(visitExp(ctx->exp())));
+    }
     return stmt;
 }
 

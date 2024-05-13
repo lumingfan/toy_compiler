@@ -79,8 +79,10 @@ decl
     ;
 
 stmt
-    : 'return' exp ';'
-    | Ident '=' exp ';'
+    : 'return' (exp)? ';'
+    | lVal '=' exp ';'
+    | (exp)? ';'
+    | block
     ;
 
 constDecl
