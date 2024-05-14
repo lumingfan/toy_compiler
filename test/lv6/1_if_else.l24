@@ -1,0 +1,5 @@
+int main() {
+  if (0) then return 1;
+  else return 2; end
+  return 3;
+}

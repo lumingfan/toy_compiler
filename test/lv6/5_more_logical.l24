@@ -4,9 +4,9 @@ int main() {
   int c = (1 && 0 || 1) * 4;
   int d = 5;
   const int e = 6 || 7 && 8;
-  if (a == 1 || a == 2);
-  if (b == 0 || b == 1) d = d + 1; else;
-  if (a && b || c && d) d = d + e;
+  if (a == 1 || a == 2) then ; end
+  if (b == 0 || b == 1) then d = d + 1; else; end
+  if (a && b || c && d) then d = d + e; end
   return d || !c;
   return d || e;
 }

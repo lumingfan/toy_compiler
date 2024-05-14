@@ -1,26 +1,26 @@
 int main() {
   int a = 10;
-  if (a > 1) {
+  if (a > 1) then {
     a = a - 1;
     int a = 5;
-    if (a < -1) {
+    if (a < -1) then {
       return 10;
     } else {
       int a;
       a = 98;
-    }
-  }
-  if (a == 9) {
+    } end
+  } end
+  if (a == 9) then {
     int b = a - 1;
     int a = b - 1;
-    if (a != b) {
-      if (!a) {
+    if (a != b) then {
+      if (!a) then {
         return 0;
-      }
+      } end
       return a;
     } else {
       return b;
-    }
-  }
+    } end
+  } end
   return -1;
 }

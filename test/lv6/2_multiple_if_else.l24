@@ -1,0 +1,19 @@
+int main() {
+  int a = 10;
+  if (a > 1) then
+    if (a > 2) then
+      if (a < 3) then
+        return a;
+      else
+        if (a > 4) then
+          if (a < 5) then
+            return a + 1; 
+          else 
+            return a + 2;
+          end
+        end
+      end
+    end
+  end
+  return -1;
+}

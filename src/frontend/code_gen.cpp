@@ -68,16 +68,10 @@ llvm::Value *CodeGenBase::codeGenFunc(std::shared_ptr<ASTNode> node) {
 
     // Record the function arguments in the NamedValues map.
 
-    if (llvm::Value *RetVal = this->codeGenBlock(func_node->_block)) {
-        // Finish off the function.
-        (this->_ctx._builder)->CreateRet(RetVal);
-
-        // Validate the generated code, checking for consistency.
-        llvm::verifyFunction(*func);
-        return func;
-    }
-    func->eraseFromParent();
-    return nullptr;
+    this->codeGenBlock(func_node->_block);
+    // Validate the generated code, checking for consistency.
+    llvm::verifyFunction(*func);
+    return func;
 }
 llvm::Value *CodeGenBase::codeGenLVal(std::shared_ptr<ASTNode> node) {
     auto l_val_node = std::dynamic_pointer_cast<LValNode>(node);
@@ -104,11 +98,20 @@ llvm::Value *CodeGenBase::codeGenStmt(std::shared_ptr<ASTNode> node) {
     if (stmt_node->_block != nullptr) {
         return this->codeGenBlock(stmt_node->_block);
     }
+    if (stmt_node->_if_stmt != nullptr) {
+        return this->codeGenIfStmt(node);
+    }
+
     if (stmt_node->_expr == nullptr) {
         return nullptr;
     }
-
     llvm::Value *new_val = this->codeGenExp(stmt_node->_expr);
+
+    if (stmt_node->is_ret_stmt) {
+        (this->_ctx._builder)->CreateRet(new_val);
+        return nullptr;
+    }
+
     if (stmt_node->_l_val.empty()) {
         return new_val;
     }
@@ -120,6 +123,60 @@ llvm::Value *CodeGenBase::codeGenStmt(std::shared_ptr<ASTNode> node) {
     this->_ctx.setValue(stmt_node->_l_val, L24Type::ValType::VAR, new_val);
     return new_val;
 }
+llvm::Value *CodeGenBase::codeGenIfStmt(std::shared_ptr<ASTNode> node) {
+    auto stmt_node = std::dynamic_pointer_cast<StmtNode>(node);
+    llvm::Value *cond = this->codeGenExp(stmt_node->_expr);
+    if (cond == nullptr) {
+        return nullptr;
+    }
+    cond = this->intToBoolean(cond);
+    llvm::Function *func = (this->_ctx._builder)->GetInsertBlock()->getParent();
+
+    // Create blocks for the then and else cases.  Insert the 'then' block at the
+    // end of the function.
+    llvm::BasicBlock *thenBB =
+        llvm::BasicBlock::Create(*(this->_ctx._context), "then", func);
+    llvm::BasicBlock *elseBB = llvm::BasicBlock::Create(*(this->_ctx._context), "else");
+    llvm::BasicBlock *mergeBB = llvm::BasicBlock::Create(*(this->_ctx._context), "ifcont");
+
+    (this->_ctx._builder)->CreateCondBr(cond, thenBB, elseBB);
+
+
+    // Emit then value.
+    (this->_ctx._builder)->SetInsertPoint(thenBB);
+
+    // generate then stmts code
+    this->codeGenStmt(stmt_node->_if_stmt);
+
+    (this->_ctx._builder)->CreateBr(mergeBB);
+
+    // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
+    thenBB = (this->_ctx._builder)->GetInsertBlock();
+
+    // Emit else block.
+    func->insert(func->end(), elseBB);
+    (this->_ctx._builder)->SetInsertPoint(elseBB);
+
+    // generate else stmts code
+    if (stmt_node->_else_stmt) {
+        this->codeGenStmt(stmt_node->_else_stmt);
+    }
+
+    (this->_ctx._builder)->CreateBr(mergeBB);
+    // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
+    elseBB = (this->_ctx._builder)->GetInsertBlock();
+
+    // Emit merge block.
+    func->insert(func->end(), mergeBB);
+    (this->_ctx._builder)->SetInsertPoint(mergeBB);
+    llvm::PHINode *PN = (this->_ctx._builder)->CreatePHI(llvm::Type::getInt64Ty(*(this->_ctx._context)), 2, "iftmp");
+
+    // we don't care the return value of if-then-else
+    PN->addIncoming(this->getInitInt(), thenBB);
+    PN->addIncoming(this->getInitInt(), elseBB);
+    return nullptr;
+}
+
 llvm::Value *CodeGenBase::codeGenNumber(std::shared_ptr<ASTNode> node) {
     auto number_node = std::dynamic_pointer_cast<NumberNode>(node);
     return llvm::ConstantInt::get(*(this->_ctx._context), llvm::APInt(64, number_node->_int_literal));
