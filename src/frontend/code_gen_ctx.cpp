@@ -31,8 +31,8 @@ void CodeGenContext::defineValue(const std::string &ident, L24Type::ValType ty, 
 
     if (named_values.count(ident) == 0) {
         switch (ty) {
-        case L24Type::ValType::CONST: named_values[ident] = L24Type::ConstVal(val); break;
-        case L24Type::ValType::VAR: named_values[ident] = L24Type::VarVal(val); break;
+        case L24Type::ValType::CONST: named_values[ident] = L24Type::ConstVal(this->createDefineValueInst(val, ident)); break;
+        case L24Type::ValType::VAR: named_values[ident] = L24Type::VarVal(this->createDefineValueInst(val, ident)); break;
         default: LogError("you must specify var/const of this ident");
         }
     } else {
@@ -58,8 +58,8 @@ void CodeGenContext::setValue(const std::string &ident, L24Type::ValType ty, llv
 
     if (named_values.count(ident) == 0) {
         switch (ty) {
-        case L24Type::ValType::CONST: named_values[ident] = L24Type::ConstVal(val); break;
-        case L24Type::ValType::VAR: named_values[ident] = L24Type::VarVal(val); break;
+        case L24Type::ValType::CONST: named_values[ident] = L24Type::ConstVal(this->createDefineValueInst(val, ident)); break;
+        case L24Type::ValType::VAR: named_values[ident] = L24Type::VarVal(this->createDefineValueInst(val, ident)); break;
         default: LogError("you must specify var/const of this ident");
         }
         return;
@@ -67,7 +67,7 @@ void CodeGenContext::setValue(const std::string &ident, L24Type::ValType ty, llv
 
     assert(ty == L24Type::ValType::VAR);
     try {
-        named_values[ident] = L24Type::VarVal(val);
+        this->createSetValueInst(std::get<L24Type::VarVal>(named_values[ident])._val, val);
     } catch (std::bad_variant_access const &ex) { LogError(ident + " is a const"); }
 }
 
@@ -88,8 +88,8 @@ llvm::Value *CodeGenContext::getValue(const std::string &ident, L24Type::ValType
     const auto &var_val = named_values[ident];
     try {
         switch (ty) {
-        case L24Type::ValType::VAR: return std::get<L24Type::VarVal>(var_val)._val;
-        default: return std::get<L24Type::ConstVal>(var_val)._val;
+        case L24Type::ValType::VAR: return this->createGetValueInst(std::get<L24Type::VarVal>(var_val)._val, ident);
+        default: return this->createGetValueInst(std::get<L24Type::ConstVal>(var_val)._val, ident);
         }
     } catch (std::bad_variant_access const &ex) {
         switch (ty) {
@@ -100,7 +100,7 @@ llvm::Value *CodeGenContext::getValue(const std::string &ident, L24Type::ValType
             LogError(std::string(ex.what()) + ": contained const, not var");
             break;
         case L24Type::ValType::ANY:
-            return std::get<L24Type::VarVal>(var_val)._val;
+            return this->createGetValueInst(std::get<L24Type::VarVal>(var_val)._val, ident);
         }
     }
     return nullptr;

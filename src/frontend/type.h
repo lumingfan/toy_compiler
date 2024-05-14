@@ -13,15 +13,15 @@ public:
     };
 
     struct ConstVal {
-        llvm::Value *_val;
+        llvm::AllocaInst *_val;
         ConstVal(): _val(nullptr) {}
-        ConstVal(llvm::Value *v): _val(v) {}
+        ConstVal(llvm::AllocaInst *v): _val(v) {}
     };
 
     struct VarVal {
-        llvm::Value *_val;
+        llvm::AllocaInst *_val;
         VarVal(): _val(nullptr) {}
-        VarVal(llvm::Value *v): _val(v) {}
+        VarVal(llvm::AllocaInst *v): _val(v) {}
     };
 
 };
