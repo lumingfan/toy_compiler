@@ -97,6 +97,7 @@ public:
     std::shared_ptr<ASTNode> _block;
     std::shared_ptr<ASTNode> _if_stmt;
     std::shared_ptr<ASTNode> _else_stmt;
+    std::shared_ptr<ASTNode> _while_stmt;
 };
 
 class ExprNode : public ASTNode {

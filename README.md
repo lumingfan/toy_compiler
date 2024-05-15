@@ -51,3 +51,34 @@ cmake .. -DLLVM_TARGETS_TO_BUILD=all
 [MyFirstLanguageFrontend](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/)
 
 [writing-your-own-toy-compiler](https://gnuu.org/2009/09/18/writing-your-own-toy-compiler/)
+
+
+
+### LLVM Spec
+
+当使用 Create 创建 BasicBlock 时，第一个 BasicBlock 不可以使用 `func->insert(func->end(), bb)`, 后面的均需使用
+
+```c++
+llvm::BasicBlock *thenBB =
+    llvm::BasicBlock::Create(*(this->_ctx._context), "then", func);
+llvm::BasicBlock *elseBB = llvm::BasicBlock::Create(*(this->_ctx._context), "else");
+llvm::BasicBlock *mergeBB = llvm::BasicBlock::Create(*(this->_ctx._context), "ifcont");
+
+// Emit then value.
+(this->_ctx._builder)->SetInsertPoint(thenBB);
+
+...
+
+// Emit else block.
+func->insert(func->end(), elseBB);
+(this->_ctx._builder)->SetInsertPoint(elseBB);
+
+// Emit merge block.
+func->insert(func->end(), mergeBB);
+(this->_ctx._builder)->SetInsertPoint(mergeBB);
+```
+
+当创建新的 BasicBlock, 一定要在 `(this->_ctx._builder)->SetInsertPoint(bb);` 前加上 
+```c++
+(this->_ctx._builder)->CreateBr(bb); // 或 CreateCondBr, 因为新的 bb 的位置并不一定就是 eip + word_size
+```

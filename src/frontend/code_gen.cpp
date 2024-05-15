@@ -101,6 +101,9 @@ llvm::Value *CodeGenBase::codeGenStmt(std::shared_ptr<ASTNode> node) {
     if (stmt_node->_if_stmt != nullptr) {
         return this->codeGenIfStmt(node);
     }
+    if (stmt_node->_while_stmt != nullptr) {
+        return this->codeGenWhileStmt(node);
+    }
 
     if (stmt_node->_expr == nullptr) {
         return nullptr;
@@ -141,7 +144,6 @@ llvm::Value *CodeGenBase::codeGenIfStmt(std::shared_ptr<ASTNode> node) {
 
     (this->_ctx._builder)->CreateCondBr(cond, thenBB, elseBB);
 
-
     // Emit then value.
     (this->_ctx._builder)->SetInsertPoint(thenBB);
 
@@ -151,7 +153,6 @@ llvm::Value *CodeGenBase::codeGenIfStmt(std::shared_ptr<ASTNode> node) {
     (this->_ctx._builder)->CreateBr(mergeBB);
 
     // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
-    thenBB = (this->_ctx._builder)->GetInsertBlock();
 
     // Emit else block.
     func->insert(func->end(), elseBB);
@@ -164,11 +165,46 @@ llvm::Value *CodeGenBase::codeGenIfStmt(std::shared_ptr<ASTNode> node) {
 
     (this->_ctx._builder)->CreateBr(mergeBB);
     // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
-    elseBB = (this->_ctx._builder)->GetInsertBlock();
 
     // Emit merge block.
     func->insert(func->end(), mergeBB);
     (this->_ctx._builder)->SetInsertPoint(mergeBB);
+
+    return nullptr;
+}
+
+llvm::Value *CodeGenBase::codeGenWhileStmt(std::shared_ptr<ASTNode> node) {
+    auto stmt_node = std::dynamic_pointer_cast<StmtNode>(node);
+
+    llvm::Function *func = (this->_ctx._builder)->GetInsertBlock()->getParent();
+    llvm::BasicBlock *loop_bb = llvm::BasicBlock::Create(*(this->_ctx._context), "loop_cond", func);
+    llvm::BasicBlock *body_bb = llvm::BasicBlock::Create(*(this->_ctx._context), "loop_body");
+    llvm::BasicBlock *after_bb = llvm::BasicBlock::Create(*(this->_ctx._context), "after_loop");
+
+    (this->_ctx._builder)->CreateBr(loop_bb);
+
+    (this->_ctx._builder)->SetInsertPoint(loop_bb);
+
+    // generate condition expression code
+    llvm::Value *cond = this->codeGenExp(stmt_node->_expr);
+    if (cond == nullptr) {
+        return nullptr;
+    }
+
+    cond = this->intToBoolean(cond);
+    // Insert the conditional branch into the end
+    (this->_ctx._builder)->CreateCondBr(cond, body_bb, after_bb);
+
+    func->insert(func->end(), body_bb);
+    (this->_ctx._builder)->SetInsertPoint(body_bb);
+
+    // generate body code
+    this->codeGenStmt(stmt_node->_while_stmt);
+    (this->_ctx._builder)->CreateBr(loop_bb);
+
+    // Start emit AfterBB
+    func->insert(func->end(), after_bb);
+    (this->_ctx._builder)->SetInsertPoint(after_bb);
 
     return nullptr;
 }

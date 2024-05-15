@@ -50,13 +50,16 @@ std::any ASTBuilder::visitStmt(l24Parser::StmtContext *ctx) {
     if (ctx->exp()) {
         stmt->_expr = std::move(std::any_cast<std::shared_ptr<ExprNode>>(visitExp(ctx->exp())));
     }
-    if (ctx->stmt().empty()) {
-        return stmt;
+    if (ctx->If()) {
+        stmt->_if_stmt = std::move(std::any_cast<std::shared_ptr<StmtNode>>(visitStmt(ctx->stmt()[0])));
+        if (ctx->stmt().size() == 2) {
+            stmt->_else_stmt = std::move(std::any_cast<std::shared_ptr<StmtNode>>(visitStmt(ctx->stmt()[1])));
+        }
     }
-    stmt->_if_stmt = std::move(std::any_cast<std::shared_ptr<StmtNode>>(visitStmt(ctx->stmt()[0])));
-    if (ctx->stmt().size() == 2) {
-        stmt->_else_stmt = std::move(std::any_cast<std::shared_ptr<StmtNode>>(visitStmt(ctx->stmt()[1])));
+    if (ctx->While()) {
+        stmt->_while_stmt = std::move(std::any_cast<std::shared_ptr<StmtNode>>(visitStmt(ctx->stmt()[0])));
     }
+
     return stmt;
 }
 

@@ -99,7 +99,7 @@ public:
     llvm::Value *codeGenVarDef(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenInitVal(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenIfStmt(std::shared_ptr<ASTNode> node);
-
+    llvm::Value *codeGenWhileStmt(std::shared_ptr<ASTNode> node);
 };
 
 

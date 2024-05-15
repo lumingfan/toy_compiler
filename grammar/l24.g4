@@ -84,6 +84,7 @@ stmt
     | (exp)? ';'
     | block
     | 'if' '(' exp ')' 'then' stmt ('else' stmt)? 'end'
+    | 'while' '(' exp ')' stmt
     ;
 
 constDecl
