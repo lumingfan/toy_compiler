@@ -91,7 +91,9 @@ public:
 
 class StmtNode : public ASTNode {
 public:
-    bool is_ret_stmt;
+    bool _is_ret_stmt;
+    bool _is_continue_stmt;
+    bool _is_break_stmt;
     std::string _l_val;
     std::shared_ptr<ASTNode> _expr;
     std::shared_ptr<ASTNode> _block;

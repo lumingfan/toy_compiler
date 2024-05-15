@@ -46,7 +46,14 @@ public:
     std::unique_ptr<llvm::LLVMContext> _context;
     std::unique_ptr<llvm::Module> _module;
     std::unique_ptr<llvm::IRBuilder<>> _builder;
+
+    // used by find var/const
     std::vector<std::map<std::string, std::variant<L24Type::ConstVal, L24Type::VarVal>>> _nested_named_values;
+
+    // used by continue/break to generate unconditional branch instruction
+    // first is loop block (continue)
+    // second is after loop block (break)
+    std::vector<std::pair<llvm::BasicBlock*, llvm::BasicBlock*>> _nested_blocks;
 
 
     CodeGenContext();

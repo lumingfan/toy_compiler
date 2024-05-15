@@ -7,11 +7,13 @@ Then : 'then';
 Else : 'else';
 End : 'end';
 While : 'while';
+Continue : 'continue';
+Break : 'break';
+Return : 'return';
 Scan : 'scan';
 Print : 'print';
-Int : 'int';
-Return : 'return';
 Const : 'const';
+Int : 'int';
 
 
 // literal
@@ -85,6 +87,8 @@ stmt
     | block
     | 'if' '(' exp ')' 'then' stmt ('else' stmt)? 'end'
     | 'while' '(' exp ')' stmt
+    | 'continue' ';'
+    | 'break' ';'
     ;
 
 constDecl

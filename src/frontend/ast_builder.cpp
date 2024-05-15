@@ -37,13 +37,22 @@ std::any ASTBuilder::visitBlock(l24Parser::BlockContext *ctx) {
 std::any ASTBuilder::visitStmt(l24Parser::StmtContext *ctx) {
     auto stmt = std::make_shared<StmtNode>();
     if (ctx->Return()) {
-        stmt->is_ret_stmt = true;
+        stmt->_is_ret_stmt = true;
     }
 
     if (ctx->block()) {
         stmt->_block = std::move(std::any_cast<std::shared_ptr<BlockNode>>(visitBlock(ctx->block())));
         return stmt;
     }
+    if (ctx->Continue()) {
+        stmt->_is_continue_stmt = true;
+        return stmt;
+    }
+    if (ctx->Break()) {
+        stmt->_is_break_stmt = true;
+        return stmt;
+    }
+
     if (ctx->lVal()) {
         stmt->_l_val = ctx->lVal()->Ident()->getText();
     }

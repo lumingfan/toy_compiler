@@ -82,3 +82,19 @@ func->insert(func->end(), mergeBB);
 ```c++
 (this->_ctx._builder)->CreateBr(bb); // 或 CreateCondBr, 因为新的 bb 的位置并不一定就是 eip + word_size
 ```
+
+llvm 不允许两个相连的跳转指令， 参考 [stackoverflow](https://stackoverflow.com/questions/67902111/llvm-ir-cannot-break-out-of-the-loop)
+(continue/break 可能会产生两个相连的跳转指令，因此 if 和 while 的 codegen 实现中需要额外判断)
+
+获取当前 BasicBlock 的方法：
+```c++
+(this->_ctx._builder)->GetInsertBlock()
+```
+
+从一个 BasicBlock 中获取最后一个 Instruction 的方法为:
+```c++
+bb->back();
+
+// 判断是否为 BranchInst
+llvm::isa<llvm::BranchInst>(bb->back());
+```

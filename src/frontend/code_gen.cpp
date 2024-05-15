@@ -104,13 +104,25 @@ llvm::Value *CodeGenBase::codeGenStmt(std::shared_ptr<ASTNode> node) {
     if (stmt_node->_while_stmt != nullptr) {
         return this->codeGenWhileStmt(node);
     }
+    if (stmt_node->_is_break_stmt || stmt_node->_is_continue_stmt) {
+        if ((this->_ctx._nested_blocks).empty()) {
+            l24::CodeGenContext::LogError("syntax error: continue/break must exist in a loop");
+            return nullptr;
+        }
+        if (stmt_node->_is_continue_stmt) {
+            this->_ctx._builder->CreateBr(this->_ctx._nested_blocks.back().first);
+        } else {
+            this->_ctx._builder->CreateBr(this->_ctx._nested_blocks.back().second);
+        }
+        return nullptr;
+    }
 
     if (stmt_node->_expr == nullptr) {
         return nullptr;
     }
     llvm::Value *new_val = this->codeGenExp(stmt_node->_expr);
 
-    if (stmt_node->is_ret_stmt) {
+    if (stmt_node->_is_ret_stmt) {
         (this->_ctx._builder)->CreateRet(new_val);
         return nullptr;
     }
@@ -150,7 +162,11 @@ llvm::Value *CodeGenBase::codeGenIfStmt(std::shared_ptr<ASTNode> node) {
     // generate then stmts code
     this->codeGenStmt(stmt_node->_if_stmt);
 
-    (this->_ctx._builder)->CreateBr(mergeBB);
+    // prevent two branch insts case
+    // this may happen with continue/break
+    if (!llvm::isa<llvm::BranchInst>((this->_ctx._builder)->GetInsertBlock()->back())) {
+        (this->_ctx._builder)->CreateBr(mergeBB);
+    }
 
     // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
 
@@ -163,7 +179,11 @@ llvm::Value *CodeGenBase::codeGenIfStmt(std::shared_ptr<ASTNode> node) {
         this->codeGenStmt(stmt_node->_else_stmt);
     }
 
-    (this->_ctx._builder)->CreateBr(mergeBB);
+    // prevent two branch insts case
+    // this may happen with continue/break
+    if (!llvm::isa<llvm::BranchInst>((this->_ctx._builder)->GetInsertBlock()->back())) {
+        (this->_ctx._builder)->CreateBr(mergeBB);
+    }
     // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
 
     // Emit merge block.
@@ -181,6 +201,9 @@ llvm::Value *CodeGenBase::codeGenWhileStmt(std::shared_ptr<ASTNode> node) {
     llvm::BasicBlock *body_bb = llvm::BasicBlock::Create(*(this->_ctx._context), "loop_body");
     llvm::BasicBlock *after_bb = llvm::BasicBlock::Create(*(this->_ctx._context), "after_loop");
 
+    // record block info for continue/break
+    (this->_ctx._nested_blocks).emplace_back(loop_bb, after_bb);
+
     (this->_ctx._builder)->CreateBr(loop_bb);
 
     (this->_ctx._builder)->SetInsertPoint(loop_bb);
@@ -188,6 +211,8 @@ llvm::Value *CodeGenBase::codeGenWhileStmt(std::shared_ptr<ASTNode> node) {
     // generate condition expression code
     llvm::Value *cond = this->codeGenExp(stmt_node->_expr);
     if (cond == nullptr) {
+        // we exit this loop
+        (this->_ctx._nested_blocks).pop_back();
         return nullptr;
     }
 
@@ -200,12 +225,18 @@ llvm::Value *CodeGenBase::codeGenWhileStmt(std::shared_ptr<ASTNode> node) {
 
     // generate body code
     this->codeGenStmt(stmt_node->_while_stmt);
-    (this->_ctx._builder)->CreateBr(loop_bb);
+
+    // prevent two br instructions case
+    // continue/break may cause this situation
+    if (!llvm::isa<llvm::BranchInst> ((this->_ctx._builder)->GetInsertBlock()->back())) {
+        (this->_ctx._builder)->CreateBr(loop_bb);
+    }
 
     // Start emit AfterBB
     func->insert(func->end(), after_bb);
     (this->_ctx._builder)->SetInsertPoint(after_bb);
 
+    (this->_ctx._nested_blocks).pop_back();
     return nullptr;
 }
 
