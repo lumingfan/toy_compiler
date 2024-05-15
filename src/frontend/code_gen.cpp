@@ -169,11 +169,7 @@ llvm::Value *CodeGenBase::codeGenIfStmt(std::shared_ptr<ASTNode> node) {
     // Emit merge block.
     func->insert(func->end(), mergeBB);
     (this->_ctx._builder)->SetInsertPoint(mergeBB);
-    llvm::PHINode *PN = (this->_ctx._builder)->CreatePHI(llvm::Type::getInt64Ty(*(this->_ctx._context)), 2, "iftmp");
 
-    // we don't care the return value of if-then-else
-    PN->addIncoming(this->getInitInt(), thenBB);
-    PN->addIncoming(this->getInitInt(), elseBB);
     return nullptr;
 }
 
