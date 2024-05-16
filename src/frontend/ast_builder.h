@@ -21,6 +21,9 @@ public:
 
     std::any visitProgram(l24Parser::ProgramContext *ctx) override;
     std::any visitFunc(l24Parser::FuncContext *ctx) override;
+    std::any visitFuncFParams(l24Parser::FuncFParamsContext *ctx) override;
+    std::any visitFuncFParam(l24Parser::FuncFParamContext *ctx) override;
+    std::any visitFuncRParams(l24Parser::FuncRParamsContext *ctx) override;
     std::any visitBlock(l24Parser::BlockContext *ctx) override;
     std::any visitBlockItem(l24Parser::BlockItemContext *ctx) override;
     std::any visitDecl(l24Parser::DeclContext *ctx) override;

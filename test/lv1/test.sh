@@ -12,7 +12,7 @@ do
       exit 1
     fi
 
-    gcc "output.S" -o "output"
+    gcc -L../../lib -lsysy "output.S" -o "output"
     ./output
     if [ $(echo $?) != $(cat ${filename%%.*}.out) ]; then
       echo "result of ${filename} is wrong"

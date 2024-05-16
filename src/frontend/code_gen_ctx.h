@@ -58,6 +58,7 @@ public:
 
     CodeGenContext();
     static void LogError(const std::string &str);
+    void codeGenStandardLibrary();
     void pushNamedValuesLayer();
     void popNamedValuesLayer();
     void defineValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val);

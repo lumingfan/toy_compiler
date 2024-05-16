@@ -12,14 +12,22 @@ std::shared_ptr<ASTNode> ASTBuilder::build(l24Parser::ProgramContext *ctx) {
 
 std::any ASTBuilder::visitProgram(l24Parser::ProgramContext *ctx) {
     auto program = std::make_shared<ProgNode>();
-    program->_func = std::any_cast<std::shared_ptr<FuncNode>>(visitFunc(ctx->func()));
+    for (auto func_ctx : ctx->func()) {
+        program->_funcs.push_back(std::any_cast<std::shared_ptr<FuncNode>>(visitFunc(func_ctx)));
+    }
     return program;
 }
 
 std::any ASTBuilder::visitFunc(l24Parser::FuncContext *ctx) {
     auto func = std::make_shared<FuncNode>();
-    func->_type = ctx->Int()->getText();
+    if (ctx->Int() != nullptr) {
+        func->_type = ctx->Int()->getText();
+    } else {
+        func->_type = ctx->Void()->getText();
+    }
+
     func->_ident = ctx->Ident()->getText();
+    func->_param = std::move(std::any_cast<std::shared_ptr<FuncFParamsNode>>(visitFuncFParams(ctx->funcFParams())));
     func->_block = std::move(std::any_cast<std::shared_ptr<BlockNode>>(visitBlock(ctx->block())));
 
     return func;
@@ -88,7 +96,8 @@ std::any ASTBuilder::visitUnaryExp(l24Parser::UnaryExpContext *ctx) {
         unary_expr->_unary_op = std::move(std::any_cast<std::shared_ptr<UnaryOpNode>>(visitUnaryOp(ctx->unaryOp())));
         unary_expr->_unary_expr = std::move(std::any_cast<std::shared_ptr<UnaryExprNode>>(visitUnaryExp(ctx->unaryExp())));
     } else {
-        ASTBuilder::BuildError("UnaryExp build failed");
+        unary_expr->_func_ident = ctx->Ident()->getText();
+        unary_expr->_func_r_params = std::move(std::any_cast<std::shared_ptr<FuncRParamsNode>>(visitFuncRParams(ctx->funcRParams())));
     }
     return unary_expr;
 }
@@ -276,6 +285,33 @@ std::any ASTBuilder::visitLVal(l24Parser::LValContext *ctx) {
     auto l_val_node = std::make_shared<LValNode>();
     l_val_node->_ident = ctx->Ident()->getText();
     return l_val_node;
+}
+
+std::any ASTBuilder::visitFuncFParams(l24Parser::FuncFParamsContext *ctx) {
+    auto func_f_params_node = std::make_shared<FuncFParamsNode>();
+    if (ctx == nullptr) {
+        return func_f_params_node;
+    }
+    for (auto func_f_param_ctx : ctx->funcFParam()) {
+        func_f_params_node->_params.push_back(std::move(std::any_cast<std::shared_ptr<FuncFParamNode>>(visitFuncFParam(func_f_param_ctx))));
+    }
+    return func_f_params_node;
+}
+std::any ASTBuilder::visitFuncFParam(l24Parser::FuncFParamContext *ctx) {
+    auto func_f_param_node = std::make_shared<FuncFParamNode>();
+    func_f_param_node->_type = ctx->Int()->getText();
+    func_f_param_node->_ident = ctx->Ident()->getText();
+    return func_f_param_node;
+}
+std::any ASTBuilder::visitFuncRParams(l24Parser::FuncRParamsContext *ctx) {
+    auto func_r_params_node = std::make_shared<FuncRParamsNode>();
+    if (ctx == nullptr) {
+        return func_r_params_node;
+    }
+    for (auto exp_ctx : ctx->exp()) {
+        func_r_params_node->_exps.push_back(std::move(std::any_cast<std::shared_ptr<ExprNode>>(visitExp(exp_ctx))));
+    }
+    return func_r_params_node;
 }
 
 } // namespace l24

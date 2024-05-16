@@ -1,3 +1,4 @@
+#include <iostream>
 #include <istream>
 #include <memory>
 
@@ -22,33 +23,33 @@ using namespace antlr4;
 namespace l24 {
 
 std::shared_ptr<ASTNode> FrontEnd::parse(std::istream& stream) {
-
     llvm::DebugFlag = true;
 
     ANTLRInputStream Input(stream);
     l24Lexer Lexer(&Input);
     CommonTokenStream Tokens(&Lexer);
     Tokens.fill();
-     LLVM_DEBUG({
+    LLVM_DEBUG({
         llvm::outs() << "===== Lexer ===== \n";
         for (auto token : Tokens.getTokens()) {
             llvm::outs() << token->toString() << "\n";
         }
-     });
+    });
 
+    ANTLRErrorListener *errorListener = new BaseErrorListener();
     l24Parser Parser(&Tokens);
+    Parser.addErrorListener(errorListener);
     l24Parser::ProgramContext* Program = Parser.program();
-     LLVM_DEBUG({
+    LLVM_DEBUG({
         llvm::outs() << "===== Parser ===== \n";
         llvm::outs() << Program->toStringTree(&Parser, true) << "\n";
         if (Parser.getNumberOfSyntaxErrors()) {
             llvm::errs() << "===== Parser Failed ===== \n";
             return nullptr;
         }
-     });
+    });
 
     ASTBuilder builder;
-
     return builder.build(Program);
 }
 

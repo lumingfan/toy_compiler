@@ -18,14 +18,31 @@ public:
 
 class ProgNode : public ASTNode  {
 public:
-    std::shared_ptr<ASTNode> _func;
+    std::vector<std::shared_ptr<ASTNode>> _funcs;
 };
 
 class FuncNode : public ASTNode {
 public:
     std::string _type;
     std::string _ident;
-    std::shared_ptr<ASTNode> _block; 
+    std::shared_ptr<ASTNode> _block;
+    std::shared_ptr<ASTNode> _param;
+};
+
+class FuncFParamsNode : public ASTNode {
+public:
+    std::vector<std::shared_ptr<ASTNode>> _params;
+};
+
+class FuncFParamNode : public ASTNode {
+public:
+    std::string _type;
+    std::string _ident;
+};
+
+class FuncRParamsNode : public ASTNode {
+public:
+    std::vector<std::shared_ptr<ASTNode>> _exps;
 };
 
 class BlockNode : public ASTNode {
@@ -153,6 +170,8 @@ public:
     std::shared_ptr<ASTNode> _primary_expr;
     std::shared_ptr<ASTNode> _unary_op;
     std::shared_ptr<ASTNode> _unary_expr;
+    std::string _func_ident;
+    std::shared_ptr<ASTNode> _func_r_params;
 };
 
 class UnaryOpNode : public ASTNode {

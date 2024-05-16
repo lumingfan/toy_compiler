@@ -14,6 +14,7 @@ Scan : 'scan';
 Print : 'print';
 Const : 'const';
 Int : 'int';
+Void : 'void';
 
 
 // literal
@@ -58,16 +59,29 @@ LINECOMMENT:             '//' ~[\r\n]* -> skip;
 // parser
 
 program
-    : func 
+    : (func)* func
     ;
 
 func
-    : 'int' Ident '(' ')' block
+    : 'int' Ident '(' (funcFParams)? ')' block
+    | 'void' Ident '(' (funcFParams)? ')' block
     ;
 
 
+funcFParams
+    : funcFParam (',' funcFParam)*
+    ;
+
+funcFParam
+    : 'int' Ident
+    ;
+
+funcRParams
+    : exp (',' exp)*
+    ;
+
 block
-    : '{' (blockItem)* '}'
+: '{' (blockItem)* '}'
     ;
 
 blockItem
@@ -167,6 +181,7 @@ mulExp
 unaryExp
     : primaryExp
     | unaryOp unaryExp
+    | Ident '(' (funcRParams)? ')'
     ;
 
 unaryOp

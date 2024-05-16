@@ -54,23 +54,68 @@ void CodeGenBase::asmGen() const {
 
 llvm::Value *CodeGenBase::codeGenProgram(std::shared_ptr<ASTNode> node) {
     auto prog_node = std::dynamic_pointer_cast<ProgNode>(node);
-    this->codeGenFunc(prog_node->_func);
+    for (auto &func_node : prog_node->_funcs) {
+        this->codeGenFunc(func_node);
+    }
+
+    llvm::Function *mainF = (this->_ctx._module)->getFunction("main");
+    if (mainF == nullptr) {
+        CodeGenContext::LogError("doesn't find main function");
+    }
+    if (mainF->getReturnType() != llvm::Type::getInt64Ty(*(this->_ctx._context))) {
+        CodeGenContext::LogError("return type of main function must be int");
+    }
+
     this->_ctx._module->print(llvm::errs(), nullptr);
     return nullptr;
 }
 llvm::Value *CodeGenBase::codeGenFunc(std::shared_ptr<ASTNode> node) {
     auto func_node = std::dynamic_pointer_cast<FuncNode>(node);
-    llvm::FunctionType *ft = llvm::FunctionType::get(llvm::Type::getInt64Ty(*(this->_ctx._context)), false);
-    llvm::Function *func = llvm::Function::Create(ft, llvm::Function::ExternalLinkage,  func_node->_ident, *(this->_ctx._module));
+
+    if ((this->_ctx._module)->getFunction(func_node->_ident) != nullptr) {
+        CodeGenContext::LogError("function can't be redefined");
+    }
+
+    // args type:  (int,int) etc.
+    auto func_params_node  = std::dynamic_pointer_cast<FuncFParamsNode>(func_node->_param);
+    int params_size = func_params_node->_params.size();
+    std::vector<llvm::Type *> types(params_size, llvm::Type::getInt64Ty(*(this->_ctx._context)));
+
+    llvm::FunctionType *ft;
+    if (func_node->_type == "int") {
+        ft = llvm::FunctionType::get(llvm::Type::getInt64Ty(*(this->_ctx._context)), types, false);
+    } else {
+        ft = llvm::FunctionType::get(llvm::Type::getVoidTy(*(this->_ctx._context)), types, false);
+    }
+    llvm::Function *func =
+        llvm::Function::Create(ft, llvm::Function::ExternalLinkage, func_node->_ident, (this->_ctx._module).get());
+
+    // set args ident
+    int idx = 0;
+    for (auto &arg : func->args()) {
+        auto func_param_node = std::dynamic_pointer_cast<FuncFParamNode>(func_params_node->_params[idx++]);
+        arg.setName(func_param_node->_ident);
+    }
 
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(*(this->_ctx._context), "entry", func);
     (this->_ctx._builder)->SetInsertPoint(BB);
 
     // Record the function arguments in the NamedValues map.
+    this->_ctx.pushNamedValuesLayer();
+    for (auto &arg : func->args()) {
+        (this->_ctx).defineValue(std::string(arg.getName()), L24Type::ValType::VAR, &arg);
+    }
 
     this->codeGenBlock(func_node->_block);
+
+    // if the last instruction is not a return inst, append one
+    if (!llvm::isa<llvm::ReturnInst>(this->_ctx._builder->GetInsertBlock()->back())) {
+        this->_ctx._builder->CreateRetVoid();
+    }
     // Validate the generated code, checking for consistency.
     llvm::verifyFunction(*func);
+
+    this->_ctx.popNamedValuesLayer();
     return func;
 }
 llvm::Value *CodeGenBase::codeGenLVal(std::shared_ptr<ASTNode> node) {
@@ -84,14 +129,13 @@ llvm::Value *CodeGenBase::codeGenLVal(std::shared_ptr<ASTNode> node) {
 
 llvm::Value *CodeGenBase::codeGenBlock(std::shared_ptr<ASTNode> node) {
     auto block_node = std::dynamic_pointer_cast<BlockNode>(node);
-    llvm::Value *ret_val = nullptr;
 
     this->_ctx.pushNamedValuesLayer();
     for (const auto& blk_item_node : block_node->_block_items) {
-        ret_val = this->codeGenBlockItem(blk_item_node);
+        this->codeGenBlockItem(blk_item_node);
     }
     this->_ctx.popNamedValuesLayer();
-    return ret_val;
+    return nullptr;
 }
 llvm::Value *CodeGenBase::codeGenStmt(std::shared_ptr<ASTNode> node) {
     auto stmt_node = std::dynamic_pointer_cast<StmtNode>(node);
@@ -118,6 +162,9 @@ llvm::Value *CodeGenBase::codeGenStmt(std::shared_ptr<ASTNode> node) {
     }
 
     if (stmt_node->_expr == nullptr) {
+        if (stmt_node->_is_ret_stmt) {
+            (this->_ctx._builder)->CreateRetVoid();
+        }
         return nullptr;
     }
     llvm::Value *new_val = this->codeGenExp(stmt_node->_expr);
@@ -264,6 +311,25 @@ llvm::Value *CodeGenBase::codeGenUnaryExp(std::shared_ptr<ASTNode> node) {
             llvm::Value *zero = llvm::ConstantInt::get(*(this->_ctx._context), llvm::APInt(64, 0, false));
             return this->booleanToInt((this->_ctx._builder)->CreateICmpEQ(zero, val));
         }
+    } else {
+        // function call
+        llvm::Function *func = (this->_ctx._module)->getFunction(unary_node->_func_ident);
+        if (func == nullptr) {
+            CodeGenContext::LogError("unknown function " + unary_node->_func_ident);
+        }
+
+        auto func_params_node = std::dynamic_pointer_cast<FuncRParamsNode>(unary_node->_func_r_params);
+        if (func->arg_size() != func_params_node->_exps.size()) {
+            CodeGenContext::LogError("Incorrect arguments number, expect "
+                                     + std::to_string(func->arg_size()) +
+                                     " get " + std::to_string(func_params_node->_exps.size()));
+        }
+
+        std::vector<llvm::Value *> args_v;
+        for (const auto & _exp : func_params_node->_exps) {
+            args_v.push_back(this->codeGenExp(_exp));
+        }
+        return (this->_ctx._builder)->CreateCall(func, args_v, "call_" + unary_node->_func_ident);
     }
     return nullptr;
 }

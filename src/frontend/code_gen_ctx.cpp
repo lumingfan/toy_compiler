@@ -110,4 +110,8 @@ bool CodeGenContext::inCurrentLayer(const std::string &ident) {
     return getNamedValues(getCurrentLayer()).count(ident) != 0;
 }
 
+void CodeGenContext::codeGenStandardLibrary() {
+
+}
+
 } // namespace l24

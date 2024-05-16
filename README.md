@@ -98,3 +98,8 @@ bb->back();
 // 判断是否为 BranchInst
 llvm::isa<llvm::BranchInst>(bb->back());
 ```
+
+当创建函数参数的指令时，注意传递给 CreateStore 的值的参数需要为该参数的地址 `&arg` 
+```c++
+this->_ctx.defineValue(std::string(arg.getName()), L24Type::ValType::VAR, &arg);
+```
