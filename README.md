@@ -129,5 +129,7 @@ key->setInitializer(constantInt);
 ```
 
 
-
+<p style="color:red">
+llvm `CreateLogicalOr` and `CreateLogicalAnd` doesn't support short-circuit evaluation.
+</p>
 
