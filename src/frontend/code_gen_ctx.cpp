@@ -111,7 +111,25 @@ bool CodeGenContext::inCurrentLayer(const std::string &ident) {
 }
 
 void CodeGenContext::codeGenStandardLibrary() {
+    // void getint();
+    llvm::FunctionType *ft_getint =
+        llvm::FunctionType::get(llvm::Type::getInt64Ty(*_context), false);
+    llvm::Function::Create(ft_getint, llvm::Function::ExternalLinkage, "getint", _module.get());
 
+    // putint
+    llvm::FunctionType *ft_putint =
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*_context), {llvm::Type::getInt64Ty(*_context)}, false);
+    llvm::Function::Create(ft_putint, llvm::Function::ExternalLinkage, "putint", _module.get());
+
+    // getch
+    llvm::FunctionType *ft_getch =
+        llvm::FunctionType::get(llvm::Type::getInt64Ty(*_context), false);
+    llvm::Function::Create(ft_getch, llvm::Function::ExternalLinkage, "getch", _module.get());
+
+    // putch
+    llvm::FunctionType *ft_putch =
+        llvm::FunctionType::get(llvm::Type::getVoidTy(*_context), {llvm::Type::getInt64Ty(*_context)}, false);
+    llvm::Function::Create(ft_putch, llvm::Function::ExternalLinkage, "putch", _module.get());
 }
 
 } // namespace l24

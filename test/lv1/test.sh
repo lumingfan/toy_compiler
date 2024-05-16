@@ -13,8 +13,18 @@ do
     fi
 
     gcc -L../../lib -lsysy "output.S" -o "output"
-    ./output
-    if [ $(echo $?) != $(cat ${filename%%.*}.out) ]; then
+
+    tmp_file=$(mktemp /tmp/${filename%%.*}.output)
+
+    if [ -e ${filename%%.*}.in ]; then
+      ./output < ${filename%%.*}.in > "$tmp_file"
+    else
+      ./output
+    fi
+
+    echo $? >> "$tmp_file"
+
+    if [ $(diff "$tmp_file" ${filename%%.*}.out) ]; then
       echo "result of ${filename} is wrong"
       rm output.S
       rm output
@@ -22,6 +32,7 @@ do
     else
       echo "test ${filename} success"
     fi
+    rm "$tmp_file"
   fi
 done
 rm output.S

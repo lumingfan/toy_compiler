@@ -54,6 +54,10 @@ void CodeGenBase::asmGen() const {
 
 llvm::Value *CodeGenBase::codeGenProgram(std::shared_ptr<ASTNode> node) {
     auto prog_node = std::dynamic_pointer_cast<ProgNode>(node);
+
+    // generate function declaration for standard library
+    this->_ctx.codeGenStandardLibrary();
+
     for (auto &func_node : prog_node->_funcs) {
         this->codeGenFunc(func_node);
     }
