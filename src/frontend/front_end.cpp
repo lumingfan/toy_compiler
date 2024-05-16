@@ -39,10 +39,10 @@ std::shared_ptr<ASTNode> FrontEnd::parse(std::istream& stream) {
     ANTLRErrorListener *errorListener = new BaseErrorListener();
     l24Parser Parser(&Tokens);
     Parser.addErrorListener(errorListener);
-    l24Parser::ProgramContext* Program = Parser.program();
+    l24Parser::EntryContext* entry = Parser.entry();
     LLVM_DEBUG({
         llvm::outs() << "===== Parser ===== \n";
-        llvm::outs() << Program->toStringTree(&Parser, true) << "\n";
+        llvm::outs() << entry->toStringTree(&Parser, true) << "\n";
         if (Parser.getNumberOfSyntaxErrors()) {
             llvm::errs() << "===== Parser Failed ===== \n";
             return nullptr;
@@ -50,7 +50,7 @@ std::shared_ptr<ASTNode> FrontEnd::parse(std::istream& stream) {
     });
 
     ASTBuilder builder;
-    return builder.build(Program);
+    return builder.build(entry);
 }
 
 }  // namespace l24

@@ -52,25 +52,30 @@ void CodeGenBase::asmGen() const {
     dest.flush();
 }
 
+llvm::Value *CodeGenBase::codeGenEntry(std::shared_ptr<ASTNode> node) {
+    auto entry_node = std::dynamic_pointer_cast<EntryNode>(node);
+    // generate function declaration for standard library
+    this->_ctx.codeGenStandardLibrary();
+    this->codeGenProgram(entry_node->_prog);
+    this->_ctx._module->print(llvm::errs(), nullptr);
+    return nullptr;
+}
+
 llvm::Value *CodeGenBase::codeGenProgram(std::shared_ptr<ASTNode> node) {
     auto prog_node = std::dynamic_pointer_cast<ProgNode>(node);
 
-    // generate function declaration for standard library
-    this->_ctx.codeGenStandardLibrary();
-
-    for (auto &func_node : prog_node->_funcs) {
-        this->codeGenFunc(func_node);
+    if (prog_node->_prog) {
+        this->codeGenProgram(prog_node->_prog);
     }
 
-    llvm::Function *mainF = (this->_ctx._module)->getFunction("main");
-    if (mainF == nullptr) {
-        CodeGenContext::LogError("doesn't find main function");
-    }
-    if (mainF->getReturnType() != llvm::Type::getInt64Ty(*(this->_ctx._context))) {
-        CodeGenContext::LogError("return type of main function must be int");
+    if (prog_node->_decl) {
+        this->codeGenDecl(prog_node->_decl);
     }
 
-    this->_ctx._module->print(llvm::errs(), nullptr);
+    if (prog_node->_func) {
+        this->codeGenFunc(prog_node->_func);
+    }
+
     return nullptr;
 }
 llvm::Value *CodeGenBase::codeGenFunc(std::shared_ptr<ASTNode> node) {
@@ -456,9 +461,6 @@ llvm::Value *CodeGenBase::codeGenConstDecl(std::shared_ptr<ASTNode> node) {
 }
 llvm::Value *CodeGenBase::codeGenConstDef(std::shared_ptr<ASTNode> node) {
     auto const_def_node = std::dynamic_pointer_cast<ConstDefNode>(node);
-    if (this->_ctx.inCurrentLayer(const_def_node->_ident)) {
-        CodeGenContext::LogError("const define: const " + const_def_node->_ident + " has been defined");
-    }
     this->_ctx.defineValue(const_def_node->_ident, L24Type::ValType::CONST, this->codeGenConstInitVal(const_def_node->_const_init_val));
     return nullptr;
 }
@@ -484,9 +486,6 @@ llvm::Value *CodeGenBase::codeGenVarDecl(std::shared_ptr<ASTNode> node) {
 }
 llvm::Value *CodeGenBase::codeGenVarDef(std::shared_ptr<ASTNode> node) {
     auto var_def_node = std::dynamic_pointer_cast<VarDefNode>(node);
-    if (this->_ctx.inCurrentLayer(var_def_node->_ident)) {
-        CodeGenContext::LogError("var define: var " + var_def_node->_ident + " has been defined");
-    }
     if (var_def_node->_init_val) {
         this->_ctx.defineValue(var_def_node->_ident, L24Type::ValType::VAR, this->codeGenInitVal(var_def_node->_init_val));
     } else {

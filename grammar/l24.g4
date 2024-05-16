@@ -57,9 +57,15 @@ LINECOMMENT:             '//' ~[\r\n]* -> skip;
 
 
 // parser
+entry
+    : program
+    ;
 
 program
-    : (func)* func
+    : decl
+    | func
+    | program decl
+    | program func
     ;
 
 func

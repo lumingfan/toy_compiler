@@ -19,15 +19,17 @@ do
     if [ -e ${filename%%.*}.in ]; then
       ./output < ${filename%%.*}.in > "$tmp_file"
     else
-      ./output
+      ./output > "$tmp_file"
     fi
 
     echo $? >> "$tmp_file"
 
-    if [ $(diff "$tmp_file" ${filename%%.*}.out) ]; then
+    diff "$tmp_file" ${filename%%.*}.out
+    if [ $(echo $?) != 0 ]; then
       echo "result of ${filename} is wrong"
       rm output.S
       rm output
+      rm "$tmp_file"
       exit 1
     else
       echo "test ${filename} success"

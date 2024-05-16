@@ -13,12 +13,12 @@ namespace l24 {
 
 class ASTBuilder : public l24BaseVisitor {
 public:
-    std::shared_ptr<ASTNode> build(l24Parser::ProgramContext *ctx);
+    std::shared_ptr<ASTNode> build(l24Parser::EntryContext *ctx);
 
     static void BuildError(const char *str) {
         std::cerr << str << std::endl;
     }
-
+    std::any visitEntry(l24Parser::EntryContext *ctx) override;
     std::any visitProgram(l24Parser::ProgramContext *ctx) override;
     std::any visitFunc(l24Parser::FuncContext *ctx) override;
     std::any visitFuncFParams(l24Parser::FuncFParamsContext *ctx) override;

@@ -6,14 +6,27 @@
 
 namespace l24 {
 
-std::shared_ptr<ASTNode> ASTBuilder::build(l24Parser::ProgramContext *ctx) {
-    return std::any_cast<std::shared_ptr<ProgNode>>(visitProgram(ctx));
+std::shared_ptr<ASTNode> ASTBuilder::build(l24Parser::EntryContext *ctx) {
+    return std::any_cast<std::shared_ptr<EntryNode>>(visitEntry(ctx));
+}
+
+
+std::any ASTBuilder::visitEntry(l24Parser::EntryContext *ctx) {
+    auto entry = std::make_shared<EntryNode>();
+    entry->_prog = std::move(std::any_cast<std::shared_ptr<ProgNode>>(visitProgram(ctx->program())));
+    return entry;
 }
 
 std::any ASTBuilder::visitProgram(l24Parser::ProgramContext *ctx) {
     auto program = std::make_shared<ProgNode>();
-    for (auto func_ctx : ctx->func()) {
-        program->_funcs.push_back(std::any_cast<std::shared_ptr<FuncNode>>(visitFunc(func_ctx)));
+    if (ctx->func()) {
+        program->_func = std::move(std::any_cast<std::shared_ptr<FuncNode>>(visitFunc(ctx->func())));
+    }
+    if (ctx->decl()) {
+        program->_decl = std::move(std::any_cast<std::shared_ptr<DeclNode>>(visitDecl(ctx->decl())));
+    }
+    if (ctx->program()) {
+        program->_prog = std::move(std::any_cast<std::shared_ptr<ProgNode>>(visitProgram(ctx->program())));
     }
     return program;
 }

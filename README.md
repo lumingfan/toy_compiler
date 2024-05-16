@@ -103,3 +103,31 @@ llvm::isa<llvm::BranchInst>(bb->back());
 ```c++
 this->_ctx.defineValue(std::string(arg.getName()), L24Type::ValType::VAR, &arg);
 ```
+
+clang 连接静态库
+```shell
+clang -L <dir contains lib> -l <libname>  
+
+# 例如需要连接： ../lib/libsysy.a
+clang -L ../lib -l sysy
+```
+
+llvm 全局变量相关函数
+```c++
+// 定义全局变量并设置初始值
+_module->getOrInsertGlobal(ident, ty);
+auto constantInt =
+    llvm::ConstantInt::getIntegerValue(ty,llvm::APInt(64, (llvm::dyn_cast<llvm::ConstantInt>(val)->getSExtValue())));
+_module->getGlobalVariable(ident)->setInitializer(constantInt);
+
+// 从全局变量里获取值
+llvm::GlobalVariable* key = _module->getGlobalVariable(ident);
+return key->getInitializer();
+
+// 设置全局变量的值
+key->setInitializer(constantInt);
+```
+
+
+
+

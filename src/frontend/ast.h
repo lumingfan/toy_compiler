@@ -16,9 +16,16 @@ public:
     virtual ~ASTNode() = default; 
 };
 
+class EntryNode : public ASTNode {
+public:
+    std::shared_ptr<ASTNode> _prog;
+};
+
 class ProgNode : public ASTNode  {
 public:
-    std::vector<std::shared_ptr<ASTNode>> _funcs;
+    std::shared_ptr<ASTNode> _decl;
+    std::shared_ptr<ASTNode> _func;
+    std::shared_ptr<ASTNode> _prog;
 };
 
 class FuncNode : public ASTNode {

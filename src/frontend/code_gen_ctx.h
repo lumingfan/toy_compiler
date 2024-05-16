@@ -65,6 +65,9 @@ public:
     void setValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val);
     llvm::Value *getValue(const std::string &ident, L24Type::ValType ty);
     bool inCurrentLayer(const std::string &ident);
+    void defineGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *val);
+    void setGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *val);
+    llvm::Value *getGlobalValue(const std::string &ident, llvm::Type *ty);
 };
 
 } // namespace l24

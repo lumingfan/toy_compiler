@@ -30,6 +30,7 @@ namespace l24 {
 
 class CodeGen {
 public:
+    virtual llvm::Value *codeGenEntry(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenProgram(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenFunc(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenBlock(std::shared_ptr<ASTNode> node) = 0;
@@ -74,6 +75,7 @@ private:
 public:
     void asmGen() const;
 
+    llvm::Value *codeGenEntry(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenLorExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenLandExp(std::shared_ptr<ASTNode> node) override;

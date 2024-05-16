@@ -36,10 +36,10 @@ int main(int argc, const char *argv[]) {
     }
 
     FrontEnd front_end;
-    auto prog_node = front_end.parse(stream);
+    auto entry_node = front_end.parse(stream);
 
     CodeGenBase cgb;
-    cgb.codeGenProgram(prog_node);
+    cgb.codeGenEntry(entry_node);
     cgb.asmGen();
 
     return 0;

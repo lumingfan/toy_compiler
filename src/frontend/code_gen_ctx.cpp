@@ -27,6 +27,12 @@ void CodeGenContext::popNamedValuesLayer() {
 void CodeGenContext::defineValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val)  {
     assert(ty == L24Type::ValType::CONST || ty == L24Type::ValType::VAR);
 
+    // this var/const is a global var/const
+    if (_nested_named_values.empty()) {
+        this->defineGlobalValue(ident, llvm::Type::getInt64Ty(*_context), val);
+        return ;
+    }
+
     auto &named_values = getNamedValues(getCurrentLayer());
 
     if (named_values.count(ident) == 0) {
@@ -51,7 +57,8 @@ void CodeGenContext::setValue(const std::string &ident, L24Type::ValType ty, llv
         }
     }
     if (valid_layer == -1) {
-        LogError("doesn't find identifier: " + ident);
+        setGlobalValue(ident, llvm::Type::getInt64Ty(*_context), val);
+        return ;
     }
 
     auto &named_values = getNamedValues(valid_layer);
@@ -81,7 +88,7 @@ llvm::Value *CodeGenContext::getValue(const std::string &ident, L24Type::ValType
     }
 
     if (valid_layer == -1) {
-        return nullptr;
+        return getGlobalValue(ident, llvm::Type::getInt64Ty(*_context));
     }
 
     auto &named_values = getNamedValues(valid_layer);
@@ -130,6 +137,47 @@ void CodeGenContext::codeGenStandardLibrary() {
     llvm::FunctionType *ft_putch =
         llvm::FunctionType::get(llvm::Type::getVoidTy(*_context), {llvm::Type::getInt64Ty(*_context)}, false);
     llvm::Function::Create(ft_putch, llvm::Function::ExternalLinkage, "putch", _module.get());
+
+}
+void CodeGenContext::defineGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *val) {
+    if (_module->getGlobalVariable(ident) != nullptr) {
+        CodeGenContext::LogError("redefine global var/const: " + ident);
+    }
+
+    _module->getOrInsertGlobal(ident, ty);
+    auto constantInt =
+        llvm::ConstantInt::getIntegerValue(ty,llvm::APInt(64, (llvm::dyn_cast<llvm::ConstantInt>(val)->getSExtValue())));
+    _module->getGlobalVariable(ident)->setInitializer(constantInt);
 }
 
+void CodeGenContext::setGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *val) {
+    if (_module->getGlobalVariable(ident) == nullptr) {
+        CodeGenContext::LogError("global var/const: " + ident + " doesn't exist");
+    }
+
+    llvm::GlobalVariable* key = _module->getGlobalVariable(ident);
+    // set var/const in global domain
+    if (_nested_named_values.empty()) {
+        auto constantInt =
+            llvm::ConstantInt::getIntegerValue(ty,llvm::APInt(64, (llvm::dyn_cast<llvm::ConstantInt>(val)->getSExtValue())));
+        key->setInitializer(constantInt);
+        return;
+    }
+    _builder->CreateLoad(ty, key);
+    _builder->CreateStore(val, key);
+}
+
+
+llvm::Value *CodeGenContext::getGlobalValue(const std::string &ident, llvm::Type *ty) {
+    if (_module->getGlobalVariable(ident) == nullptr) {
+        CodeGenContext::LogError("global var/const: " + ident + " doesn't exist");
+    }
+    llvm::GlobalVariable* key = _module->getGlobalVariable(ident);
+
+    // get var/const in global domain
+    if (_nested_named_values.empty()) {
+        return key->getInitializer();
+    }
+    return _builder->CreateLoad(ty, key);
+}
 } // namespace l24
