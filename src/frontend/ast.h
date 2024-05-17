@@ -84,33 +84,27 @@ public:
 class ConstDefNode : public ASTNode {
 public:
     std::string _ident;
-    std::shared_ptr<ASTNode> _const_init_val;
+    std::shared_ptr<ASTNode> _init_val;
+    std::shared_ptr<ASTNode> _exp;
 };
 
 class VarDefNode : public ASTNode {
 public:
     std::string _ident;
     std::shared_ptr<ASTNode> _init_val;
-};
-
-class ConstInitValNode : public ASTNode {
-public:
-    std::shared_ptr<ASTNode> _const_exp;
+    std::shared_ptr<ASTNode> _exp;
 };
 
 class InitValNode : public ASTNode {
 public:
-    std::shared_ptr<ASTNode> _exp;
-};
-
-class ConstExpNode : public ASTNode {
-public:
-    std::shared_ptr<ASTNode> _exp;
+    bool _is_array;
+    std::vector<std::shared_ptr<ASTNode>> _exp;
 };
 
 class LValNode : public ASTNode {
 public:
     std::string _ident;
+    std::shared_ptr<ASTNode> _exp;
 };
 
 class StmtNode : public ASTNode {

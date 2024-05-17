@@ -21,25 +21,77 @@ private:
         return static_cast<int>(_nested_named_values.size()) - 1;
     }
 
-    llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *func, const std::string &var_name) {
+    llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *func, const std::string &var_name, llvm::Value *array_size = nullptr) {
         llvm::IRBuilder<> TmpB(&func->getEntryBlock(),
                                func->getEntryBlock().begin());
-        return TmpB.CreateAlloca(llvm::Type::getInt64Ty(*(this->_context)), nullptr, var_name);
+        auto ty = llvm::Type::getInt64Ty(*(this->_context));
+        if (array_size == nullptr) {
+            return TmpB.CreateAlloca(ty, nullptr, var_name);
+        }
+
+        auto size = llvm::dyn_cast<llvm::ConstantInt>(array_size)->getSExtValue();
+        return TmpB.CreateAlloca(llvm::ArrayType::get(ty, size), array_size,var_name);
     }
 
-    llvm::AllocaInst *createDefineValueInst(llvm::Value *val, const std::string &ident) {
-        llvm::AllocaInst *alloca = this->CreateEntryBlockAlloca((this->_builder)->GetInsertBlock()->getParent(), ident);
-        this->_builder->CreateStore(val, alloca);
+    llvm::AllocaInst *createDefineValueInst(std::vector<llvm::Value *>vals, const std::string &ident, llvm::Value *array_size = nullptr) {
+        llvm::AllocaInst *alloca = this->CreateEntryBlockAlloca((this->_builder)->GetInsertBlock()->getParent(), ident, array_size);
+        // scalar
+        if (array_size == nullptr) {
+            this->_builder->CreateStore(vals[0], alloca);
+            return alloca;
+        }
+
+        auto ty = llvm::Type::getInt64Ty(*(this->_context));
+        // we don't support struct, so the first value of indexList always be 0
+        auto first_val = llvm::ConstantInt::get(ty, 0);
+
+        auto alloca_ty = llvm::ArrayType::get(ty, llvm::dyn_cast<llvm::ConstantInt>(alloca->getArraySize())->getSExtValue());
+
+        int64_t idx = 0;
+        for (llvm::Value *val : vals) {
+            llvm::Value* indexList[2] = {first_val, llvm::ConstantInt::get(ty, idx)};
+            auto ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
+            this->_builder->CreateStore(val, ptr);
+            ++idx;
+        }
         return alloca;
     }
 
-    void createSetValueInst(llvm::AllocaInst *alloca, llvm::Value *val) const {
-        this->_builder->CreateStore(val, alloca);
+    void createSetValueInst(llvm::AllocaInst *alloca, llvm::Value *val, llvm::Value *sub_idx) const {
+        // set a scalar value
+        if (sub_idx == nullptr) {
+            this->_builder->CreateStore(val, alloca);
+        }
+
+        // get value from an array
+        auto idx = llvm::dyn_cast<llvm::ConstantInt>(sub_idx)->getSExtValue();
+        auto ty = llvm::Type::getInt64Ty(*(this->_context));
+        auto alloca_ty = llvm::ArrayType::get(ty, llvm::dyn_cast<llvm::ConstantInt>(alloca->getArraySize())->getSExtValue());
+
+        // we don't support struct, so the first value of indexList always be 0
+        llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), llvm::ConstantInt::get(ty, idx)};
+        auto ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
+        this->_builder->CreateStore(val, ptr);
     }
 
-    llvm::Value *createGetValueInst(llvm::AllocaInst *alloca, const std::string &ident) const {
-        return this->_builder->CreateLoad(alloca->getAllocatedType(), alloca, ident.c_str());
+    llvm::Value *createGetValueInst(llvm::AllocaInst *alloca, const std::string &ident, llvm::Value *sub_idx) const {
+        // get a scalar value
+        if (sub_idx == nullptr) {
+            return this->_builder->CreateLoad(alloca->getAllocatedType(), alloca, ident.c_str());
+        }
+
+        // get value from an array
+        auto idx = llvm::dyn_cast<llvm::ConstantInt>(sub_idx)->getSExtValue();
+        auto ty = llvm::Type::getInt64Ty(*(this->_context));
+        auto alloca_ty = llvm::ArrayType::get(ty, llvm::dyn_cast<llvm::ConstantInt>(alloca->getArraySize())->getSExtValue());
+        // we don't support struct, so the first value of indexList always be 0
+        llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), llvm::ConstantInt::get(ty, idx)};
+
+        auto ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
+        return this->_builder->CreateLoad(alloca->getAllocatedType(), ptr, ident.c_str());
     }
+
+
 
 
 public:
@@ -61,9 +113,9 @@ public:
     void codeGenStandardLibrary();
     void pushNamedValuesLayer();
     void popNamedValuesLayer();
-    void defineValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val);
-    void setValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val);
-    llvm::Value *getValue(const std::string &ident, L24Type::ValType ty);
+    void defineValue(const std::string &ident, L24Type::ValType ty, std::vector<llvm::Value*> vals, llvm::Value *array_size = nullptr);
+    void setValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val, llvm::Value *sub_idx = nullptr);
+    llvm::Value *getValue(const std::string &ident, L24Type::ValType ty, llvm::Value *sub_idx = nullptr);
     bool inCurrentLayer(const std::string &ident);
     void defineGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *val);
     void setGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *val);

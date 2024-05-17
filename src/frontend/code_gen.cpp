@@ -112,7 +112,7 @@ llvm::Value *CodeGenBase::codeGenFunc(std::shared_ptr<ASTNode> node) {
     // Record the function arguments in the NamedValues map.
     this->_ctx.pushNamedValuesLayer();
     for (auto &arg : func->args()) {
-        (this->_ctx).defineValue(std::string(arg.getName()), L24Type::ValType::VAR, &arg);
+        (this->_ctx).defineValue(std::string(arg.getName()), L24Type::ValType::VAR, {&arg});
     }
 
     this->codeGenBlock(func_node->_block);
@@ -129,7 +129,12 @@ llvm::Value *CodeGenBase::codeGenFunc(std::shared_ptr<ASTNode> node) {
 }
 llvm::Value *CodeGenBase::codeGenLVal(std::shared_ptr<ASTNode> node) {
     auto l_val_node = std::dynamic_pointer_cast<LValNode>(node);
-    llvm::Value *val = this->_ctx.getValue(l_val_node->_ident, L24Type::ValType::ANY);
+    llvm::Value *sub_idx = nullptr;
+    if (l_val_node->_exp) {
+        sub_idx = this->codeGenExp(l_val_node->_exp);
+    }
+
+    llvm::Value *val = this->_ctx.getValue(l_val_node->_ident, L24Type::ValType::ANY, sub_idx);
     if (val == nullptr) {
         CodeGenContext::LogError("Ident: " + l_val_node->_ident + " hasn't been declared");
     }
@@ -185,10 +190,6 @@ llvm::Value *CodeGenBase::codeGenStmt(std::shared_ptr<ASTNode> node) {
 
     if (stmt_node->_l_val.empty()) {
         return new_val;
-    }
-    llvm::Value *val = this->_ctx.getValue(stmt_node->_l_val, L24Type::ValType::VAR);
-    if (val == nullptr) {
-        CodeGenContext::LogError("variable: " + stmt_node->_l_val + " hasn't been declared");
     }
 
     this->_ctx.setValue(stmt_node->_l_val, L24Type::ValType::VAR, new_val);
@@ -452,49 +453,73 @@ llvm::Value *CodeGenBase::codeGenConstDecl(std::shared_ptr<ASTNode> node) {
     for (const auto& const_def_ast_node : const_decl_node->_const_defs) {
         this->codeGenConstDef(const_def_ast_node);
         auto const_def_node = std::dynamic_pointer_cast<ConstDefNode>(const_def_ast_node);
-        llvm::Value *val = this->_ctx.getValue(const_def_node->_ident, L24Type::ValType::CONST);
-        if (val == nullptr || !val->getType()->isIntOrIntVectorTy(64)) {
-            CodeGenContext::LogError("const define: type violates");
-        }
+//        llvm::Value *val = this->_ctx.getValue(const_def_node->_ident, L24Type::ValType::CONST);
+//        if (val == nullptr || !val->getType()->isIntOrIntVectorTy(64)) {
+//            CodeGenContext::LogError("const define: type violates");
+//        }
     }
     return nullptr;
 }
 llvm::Value *CodeGenBase::codeGenConstDef(std::shared_ptr<ASTNode> node) {
     auto const_def_node = std::dynamic_pointer_cast<ConstDefNode>(node);
-    this->_ctx.defineValue(const_def_node->_ident, L24Type::ValType::CONST, this->codeGenConstInitVal(const_def_node->_const_init_val));
+    auto init_val_node = std::dynamic_pointer_cast<InitValNode>(const_def_node->_exp);
+
+    // array
+    if (const_def_node->_exp != nullptr) {
+        llvm::Value *array_size = this->codeGenExp(const_def_node->_exp);
+        this->_ctx.defineValue(const_def_node->_ident, L24Type::ValType::CONST, this->getInitVals(init_val_node, array_size), array_size);
+    } else {
+        this->_ctx.defineValue(const_def_node->_ident, L24Type::ValType::CONST, this->getInitVals(init_val_node));
+    }
     return nullptr;
 }
-llvm::Value *CodeGenBase::codeGenConstInitVal(std::shared_ptr<ASTNode> node) {
-    auto const_init_val_node = std::dynamic_pointer_cast<ConstInitValNode>(node);
-    return this->codeGenConstExp(const_init_val_node->_const_exp);
-}
-llvm::Value *CodeGenBase::codeGenConstExp(std::shared_ptr<ASTNode> node) {
-    auto const_exp_node = std::dynamic_pointer_cast<ConstExpNode>(node);
-    return this->codeGenExp(const_exp_node->_exp);
-}
+
 llvm::Value *CodeGenBase::codeGenVarDecl(std::shared_ptr<ASTNode> node) {
     auto var_decl_node = std::dynamic_pointer_cast<VarDeclNode>(node);
     for (const auto& var_def_ast_node : var_decl_node->_var_defs) {
         this->codeGenVarDef(var_def_ast_node);
         auto var_def_node = std::dynamic_pointer_cast<VarDefNode>(var_def_ast_node);
-        llvm::Value *val = this->_ctx.getValue(var_def_node->_ident, L24Type::ValType::VAR);
-        if (val == nullptr || !val->getType()->isIntOrIntVectorTy(64)) {
-            CodeGenContext::LogError("var define: type violates");
-        }
+//        llvm::Value *val = this->_ctx.getValue(var_def_node->_ident, L24Type::ValType::VAR);
+//        if (val == nullptr || !val->getType()->isIntOrIntVectorTy(64)) {
+//            CodeGenContext::LogError("var define: type violates");
+//        }
     }
     return nullptr;
 }
 llvm::Value *CodeGenBase::codeGenVarDef(std::shared_ptr<ASTNode> node) {
     auto var_def_node = std::dynamic_pointer_cast<VarDefNode>(node);
-    if (var_def_node->_init_val) {
-        this->_ctx.defineValue(var_def_node->_ident, L24Type::ValType::VAR, this->codeGenInitVal(var_def_node->_init_val));
+    auto init_val_node = std::dynamic_pointer_cast<InitValNode>(var_def_node->_exp);
+
+    // array
+    if (var_def_node->_exp != nullptr) {
+        llvm::Value *array_size = this->codeGenExp(var_def_node->_exp);
+        this->_ctx.defineValue(var_def_node->_ident, L24Type::ValType::VAR, this->getInitVals(init_val_node, array_size), array_size);
     } else {
-        this->_ctx.defineValue(var_def_node->_ident, L24Type::ValType::VAR, this->getInitInt());
+        this->_ctx.defineValue(var_def_node->_ident, L24Type::ValType::VAR, this->getInitVals(init_val_node));
     }
     return nullptr;
 }
-llvm::Value *CodeGenBase::codeGenInitVal(std::shared_ptr<ASTNode> node) {
-    auto init_val_node = std::dynamic_pointer_cast<InitValNode>(node);
-    return this->codeGenExp(init_val_node->_exp);
+
+std::vector<llvm::Value*> CodeGenBase::getInitVals(std::shared_ptr<InitValNode> node, llvm::Value *array_size) {
+    int64_t size = 1;
+    if (array_size != nullptr) {
+        size = llvm::dyn_cast<llvm::ConstantInt>(array_size)->getSExtValue();
+        if (size == 0) {
+            CodeGenContext::LogError("You can't define a array with size 0");
+        }
+    }
+    std::vector<llvm::Value*> val_vec;
+    for (int64_t idx = 0; idx < size; ++idx) {
+        // cases:
+        //  1. int a;
+        //  2. int a[2] = {1};
+        if (node == nullptr || idx >= node->_exp.size()) {
+            val_vec.emplace_back(this->getInitInt());
+        } else {
+            val_vec.emplace_back(this->codeGenExp(node->_exp[idx]));
+        }
+    }
+    return val_vec;
 }
+
 } //namespace l24

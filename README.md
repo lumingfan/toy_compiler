@@ -133,3 +133,15 @@ key->setInitializer(constantInt);
 llvm `CreateLogicalOr` and `CreateLogicalAnd` doesn't support short-circuit evaluation.
 </p>
 
+
+
+llvm 创建获取指针的指令
+
+[doc](https://llvm.org/docs/GetElementPtr.html)
+[doc](https://llvm.org/docs/LangRef.html#getelementptr-instruction)
+
+```c++
+// IdxList: 
+Value *CreateGEP(Type *Ty, Value *Ptr, ArrayRef<Value *> IdxList,
+                   const Twine &Name = "", bool IsInBounds = false) {
+```

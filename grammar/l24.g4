@@ -42,6 +42,8 @@ LeftBrace:          '{';
 RightBrace:         '}';
 LeftParen:          '(';
 RightParen:         ')';
+LeftSqrBr:          '[';
+RightSqrBr:         ']';
 Not:                '!';
 
 //标识符
@@ -121,29 +123,24 @@ varDecl
 
 bType
     : 'int'
-    ;
+;
 
 constDef
-    : Ident '=' constInitVal
-    ;
-varDef
-    : Ident
-    | Ident '=' initVal
+    : Ident ('[' exp ']')? '=' initVal
     ;
 
-constInitVal
-    : constExp
+varDef
+    : Ident ('[' exp ']')?  '=' initVal
+    | Ident ('[' exp ']')?
     ;
+
 initVal
     : exp
-    ;
-
-constExp
-    : exp
+    | '{' (exp (',' exp)*)? '}'
     ;
 
 lVal
-    : Ident
+    : Ident ('[' exp ']')?
     ;
 
 exp

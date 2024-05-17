@@ -51,9 +51,6 @@ public:
     virtual llvm::Value *codeGenVarDecl(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenConstDef(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenVarDef(std::shared_ptr<ASTNode> node) = 0;
-    virtual llvm::Value *codeGenConstInitVal(std::shared_ptr<ASTNode> node) = 0;
-    virtual llvm::Value *codeGenInitVal(std::shared_ptr<ASTNode> node) = 0;
-    virtual llvm::Value *codeGenConstExp(std::shared_ptr<ASTNode> node) = 0;
     virtual llvm::Value *codeGenLVal(std::shared_ptr<ASTNode> node) = 0;
 };
 
@@ -72,6 +69,8 @@ private:
         return llvm::ConstantInt::get(*(this->_ctx._context), llvm::APInt(64, 0, false));
     }
 
+    std::vector<llvm::Value*> getInitVals(std::shared_ptr<InitValNode> node, llvm::Value *array_size = nullptr);
+
 public:
     void asmGen() const;
 
@@ -87,8 +86,6 @@ public:
     llvm::Value *codeGenDecl(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenConstDecl(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenConstDef(std::shared_ptr<ASTNode> node) override;
-    llvm::Value *codeGenConstInitVal(std::shared_ptr<ASTNode> node) override;
-    llvm::Value *codeGenConstExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenLVal(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenMulExp(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenPrimaryExp(std::shared_ptr<ASTNode> node) override;
@@ -99,7 +96,6 @@ public:
     llvm::Value *codeGenNumber(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenVarDecl(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenVarDef(std::shared_ptr<ASTNode> node) override;
-    llvm::Value *codeGenInitVal(std::shared_ptr<ASTNode> node) override;
     llvm::Value *codeGenIfStmt(std::shared_ptr<ASTNode> node);
     llvm::Value *codeGenWhileStmt(std::shared_ptr<ASTNode> node);
 };

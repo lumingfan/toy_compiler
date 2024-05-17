@@ -24,12 +24,12 @@ void CodeGenContext::popNamedValuesLayer() {
     _nested_named_values.pop_back();
 }
 
-void CodeGenContext::defineValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val)  {
+void CodeGenContext::defineValue(const std::string &ident, L24Type::ValType ty, std::vector<llvm::Value*>vals, llvm::Value *array_size)  {
     assert(ty == L24Type::ValType::CONST || ty == L24Type::ValType::VAR);
 
     // this var/const is a global var/const
     if (_nested_named_values.empty()) {
-        this->defineGlobalValue(ident, llvm::Type::getInt64Ty(*_context), val);
+        this->defineGlobalValue(ident, llvm::Type::getInt64Ty(*_context), vals[0]);
         return ;
     }
 
@@ -37,8 +37,8 @@ void CodeGenContext::defineValue(const std::string &ident, L24Type::ValType ty, 
 
     if (named_values.count(ident) == 0) {
         switch (ty) {
-        case L24Type::ValType::CONST: named_values[ident] = L24Type::ConstVal(this->createDefineValueInst(val, ident)); break;
-        case L24Type::ValType::VAR: named_values[ident] = L24Type::VarVal(this->createDefineValueInst(val, ident)); break;
+        case L24Type::ValType::CONST: named_values[ident] = L24Type::ConstVal(this->createDefineValueInst(vals, ident, array_size)); break;
+        case L24Type::ValType::VAR: named_values[ident] = L24Type::VarVal(this->createDefineValueInst(vals, ident, array_size)); break;
         default: LogError("you must specify var/const of this ident");
         }
     } else {
@@ -46,7 +46,7 @@ void CodeGenContext::defineValue(const std::string &ident, L24Type::ValType ty, 
     }
 }
 
-void CodeGenContext::setValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val) {
+void CodeGenContext::setValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val, llvm::Value *sub_idx) {
     assert(ty == L24Type::ValType::CONST || ty == L24Type::ValType::VAR);
 
     int valid_layer = getCurrentLayer();
@@ -65,8 +65,8 @@ void CodeGenContext::setValue(const std::string &ident, L24Type::ValType ty, llv
 
     if (named_values.count(ident) == 0) {
         switch (ty) {
-        case L24Type::ValType::CONST: named_values[ident] = L24Type::ConstVal(this->createDefineValueInst(val, ident)); break;
-        case L24Type::ValType::VAR: named_values[ident] = L24Type::VarVal(this->createDefineValueInst(val, ident)); break;
+        case L24Type::ValType::CONST: named_values[ident] = L24Type::ConstVal(this->createDefineValueInst({val}, ident)); break;
+        case L24Type::ValType::VAR: named_values[ident] = L24Type::VarVal(this->createDefineValueInst({val}, ident)); break;
         default: LogError("you must specify var/const of this ident");
         }
         return;
@@ -74,11 +74,11 @@ void CodeGenContext::setValue(const std::string &ident, L24Type::ValType ty, llv
 
     assert(ty == L24Type::ValType::VAR);
     try {
-        this->createSetValueInst(std::get<L24Type::VarVal>(named_values[ident])._val, val);
+        this->createSetValueInst(std::get<L24Type::VarVal>(named_values[ident])._val, val, sub_idx);
     } catch (std::bad_variant_access const &ex) { LogError(ident + " is a const"); }
 }
 
-llvm::Value *CodeGenContext::getValue(const std::string &ident, L24Type::ValType ty) {
+llvm::Value *CodeGenContext::getValue(const std::string &ident, L24Type::ValType ty, llvm::Value *sub_idx) {
     int valid_layer = getCurrentLayer();
     for (; valid_layer >= 0; --valid_layer) {
         const auto &named_values = getNamedValues(valid_layer);
@@ -95,8 +95,8 @@ llvm::Value *CodeGenContext::getValue(const std::string &ident, L24Type::ValType
     const auto &var_val = named_values[ident];
     try {
         switch (ty) {
-        case L24Type::ValType::VAR: return this->createGetValueInst(std::get<L24Type::VarVal>(var_val)._val, ident);
-        default: return this->createGetValueInst(std::get<L24Type::ConstVal>(var_val)._val, ident);
+        case L24Type::ValType::VAR: return this->createGetValueInst(std::get<L24Type::VarVal>(var_val)._val, ident, sub_idx);
+        default: return this->createGetValueInst(std::get<L24Type::ConstVal>(var_val)._val, ident, sub_idx);
         }
     } catch (std::bad_variant_access const &ex) {
         switch (ty) {
@@ -107,7 +107,7 @@ llvm::Value *CodeGenContext::getValue(const std::string &ident, L24Type::ValType
             LogError(std::string(ex.what()) + ": contained const, not var");
             break;
         case L24Type::ValType::ANY:
-            return this->createGetValueInst(std::get<L24Type::VarVal>(var_val)._val, ident);
+            return this->createGetValueInst(std::get<L24Type::VarVal>(var_val)._val, ident, sub_idx);
         }
     }
     return nullptr;
@@ -180,4 +180,5 @@ llvm::Value *CodeGenContext::getGlobalValue(const std::string &ident, llvm::Type
     }
     return _builder->CreateLoad(ty, key);
 }
+
 } // namespace l24

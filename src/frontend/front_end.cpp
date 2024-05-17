@@ -34,6 +34,7 @@ std::shared_ptr<ASTNode> FrontEnd::parse(std::istream& stream) {
         for (auto token : Tokens.getTokens()) {
             llvm::outs() << token->toString() << "\n";
         }
+        llvm::outs() << "===== Lexer End ===== \n";
     });
 
     ANTLRErrorListener *errorListener = new BaseErrorListener();
@@ -47,6 +48,7 @@ std::shared_ptr<ASTNode> FrontEnd::parse(std::istream& stream) {
             llvm::errs() << "===== Parser Failed ===== \n";
             return nullptr;
         }
+        llvm::outs() << "===== Parser End ===== \n";
     });
 
     ASTBuilder builder;
