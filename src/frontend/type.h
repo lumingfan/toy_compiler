@@ -9,7 +9,7 @@ public:
     enum ValType {
         CONST,
         VAR,
-        ANY
+        ANY,
     };
 
     struct ConstVal {

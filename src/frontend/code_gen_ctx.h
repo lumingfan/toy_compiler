@@ -21,10 +21,15 @@ private:
         return static_cast<int>(_nested_named_values.size()) - 1;
     }
 
-    llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *func, const std::string &var_name, llvm::Value *array_size = nullptr) {
+    llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *func, const std::string &var_name, llvm::Value *array_size = nullptr, bool is_ptr = false) {
         llvm::IRBuilder<> TmpB(&func->getEntryBlock(),
                                func->getEntryBlock().begin());
-        auto ty = llvm::Type::getInt64Ty(*(this->_context));
+        llvm::Type *ty;
+        if (is_ptr) {
+            ty = llvm::PointerType::get(llvm::IntegerType::get(*(this->_context), 64), 0);
+        } else {
+            ty = llvm::Type::getInt64Ty(*(this->_context));
+        }
         if (array_size == nullptr) {
             return TmpB.CreateAlloca(ty, nullptr, var_name);
         }
@@ -33,8 +38,8 @@ private:
         return TmpB.CreateAlloca(llvm::ArrayType::get(ty, size), array_size,var_name);
     }
 
-    llvm::AllocaInst *createDefineValueInst(std::vector<llvm::Value *>vals, const std::string &ident, llvm::Value *array_size = nullptr) {
-        llvm::AllocaInst *alloca = this->CreateEntryBlockAlloca((this->_builder)->GetInsertBlock()->getParent(), ident, array_size);
+    llvm::AllocaInst *createDefineValueInst(std::vector<llvm::Value *>vals, const std::string &ident, llvm::Value *array_size = nullptr, bool is_ptr = false) {
+        llvm::AllocaInst *alloca = this->CreateEntryBlockAlloca((this->_builder)->GetInsertBlock()->getParent(), ident, array_size, is_ptr);
         // scalar
         if (array_size == nullptr) {
             this->_builder->CreateStore(vals[0], alloca);
@@ -65,7 +70,7 @@ private:
         }
 
         // get value from an array
-        auto ty = llvm::Type::getInt64Ty(*(this->_context));
+        auto ty = alloca->getAllocatedType();
         auto alloca_ty = llvm::ArrayType::get(ty, llvm::dyn_cast<llvm::ConstantInt>(alloca->getArraySize())->getSExtValue());
 
         // we don't support struct, so the first value of indexList always be 0
@@ -81,7 +86,7 @@ private:
         }
 
         // get value from an array
-        auto ty = llvm::Type::getInt64Ty(*(this->_context));
+        auto ty = alloca->getAllocatedType();
         auto alloca_ty = llvm::ArrayType::get(ty, llvm::dyn_cast<llvm::ConstantInt>(alloca->getArraySize())->getSExtValue());
         // we don't support struct, so the first value of indexList always be 0
         llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), sub_idx};
