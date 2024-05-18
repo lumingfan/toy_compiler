@@ -89,13 +89,16 @@ llvm::Value *CodeGenBase::codeGenFunc(std::shared_ptr<ASTNode> node) {
     auto func_params_node  = std::dynamic_pointer_cast<FuncFParamsNode>(func_node->_param);
     int params_size = func_params_node->_params.size();
     std::vector<llvm::Type *> types;
+    std::vector<bool> is_ptr_vec;
     for (int i = 0; i < params_size; ++i) {
         auto func_param_node = std::dynamic_pointer_cast<FuncFParamNode>(func_params_node->_params[i]);
         if (func_param_node->_type == "int") {
             types.emplace_back(llvm::Type::getInt64Ty(*(this->_ctx._context)));
+            is_ptr_vec.push_back(false);
         } else {
             // int array
             types.emplace_back(llvm::PointerType::get(llvm::IntegerType::get(*(this->_ctx._context), 64), 0));
+            is_ptr_vec.push_back(true);
         }
     }
 
@@ -120,8 +123,9 @@ llvm::Value *CodeGenBase::codeGenFunc(std::shared_ptr<ASTNode> node) {
 
     // Record the function arguments in the NamedValues map.
     this->_ctx.pushNamedValuesLayer();
+    idx = 0;
     for (auto &arg : func->args()) {
-        (this->_ctx).defineValue(std::string(arg.getName()), L24Type::ValType::VAR, {&arg});
+        (this->_ctx).defineValue(std::string(arg.getName()), L24Type::ValType::VAR, {&arg}, nullptr, is_ptr_vec[idx++]);
     }
 
     this->codeGenBlock(func_node->_block);

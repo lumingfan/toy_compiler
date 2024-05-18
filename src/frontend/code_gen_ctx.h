@@ -47,10 +47,11 @@ private:
         }
 
         auto ty = llvm::Type::getInt64Ty(*(this->_context));
+        auto alloca_ty = alloca->getAllocatedType();
+
         // we don't support struct, so the first value of indexList always be 0
         auto first_val = llvm::ConstantInt::get(ty, 0);
 
-        auto alloca_ty = llvm::ArrayType::get(ty, llvm::dyn_cast<llvm::ConstantInt>(alloca->getArraySize())->getSExtValue());
 
         int64_t idx = 0;
         for (llvm::Value *val : vals) {
@@ -70,28 +71,50 @@ private:
         }
 
         // get value from an array
-        auto ty = alloca->getAllocatedType();
-        auto alloca_ty = llvm::ArrayType::get(ty, llvm::dyn_cast<llvm::ConstantInt>(alloca->getArraySize())->getSExtValue());
+        auto ty = llvm::Type::getInt64Ty(*(this->_context));
+        auto alloca_ty = alloca->getAllocatedType();
 
         // we don't support struct, so the first value of indexList always be 0
+        llvm::Value *ptr;
         llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), sub_idx};
-        auto ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
+        if (!llvm::isa<llvm::ArrayType>(alloca_ty)) {
+            llvm::Type *pt_ty = llvm::PointerType::get(llvm::IntegerType::get(*(this->_context), 64), 0);
+            ptr = this->_builder->CreateInBoundsGEP(ty, this->_builder->CreateLoad(pt_ty, alloca), sub_idx);
+        } else {
+            ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
+        }
         this->_builder->CreateStore(val, ptr);
     }
 
     llvm::Value *createGetValueInst(llvm::AllocaInst *alloca, const std::string &ident, llvm::Value *sub_idx) const {
         // get a scalar value
         if (sub_idx == nullptr) {
+
+            // this is actually an array
+            // happens with function call:
+            // eg:      int arr[2] = {0, 1}; func(arr);
+            if (llvm::isa<llvm::ArrayType>(alloca->getAllocatedType())) {
+                auto ty = llvm::Type::getInt64Ty(*(this->_context));
+                llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), llvm::ConstantInt::get(ty, 0)};
+                return this->_builder->CreateGEP(alloca->getAllocatedType(), alloca, indexList);
+            }
             return this->_builder->CreateLoad(alloca->getAllocatedType(), alloca, ident.c_str());
         }
 
         // get value from an array
-        auto ty = alloca->getAllocatedType();
-        auto alloca_ty = llvm::ArrayType::get(ty, llvm::dyn_cast<llvm::ConstantInt>(alloca->getArraySize())->getSExtValue());
+        auto ty = llvm::Type::getInt64Ty(*(this->_context));
+        auto alloca_ty = alloca->getAllocatedType();
+
         // we don't support struct, so the first value of indexList always be 0
         llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), sub_idx};
 
-        auto ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
+        llvm::Value *ptr;
+        if (!llvm::isa<llvm::ArrayType>(alloca_ty)) {
+            llvm::Type *pt_ty = llvm::PointerType::get(llvm::IntegerType::get(*(this->_context), 64), 0);
+            ptr = this->_builder->CreateInBoundsGEP(ty, this->_builder->CreateLoad(pt_ty, alloca), sub_idx);
+        } else {
+            ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
+        }
         return this->_builder->CreateLoad(ty, ptr, ident.c_str());
     }
 
@@ -114,10 +137,10 @@ public:
 
     CodeGenContext();
     static void LogError(const std::string &str);
-    void codeGenStandardLibrary();
+    void codeGenStandardLibrary() const;
     void pushNamedValuesLayer();
     void popNamedValuesLayer();
-    void defineValue(const std::string &ident, L24Type::ValType ty, std::vector<llvm::Value*> vals, llvm::Value *array_size = nullptr);
+    void defineValue(const std::string &ident, L24Type::ValType ty, std::vector<llvm::Value*> vals, llvm::Value *array_size = nullptr, bool is_ptr = false);
     void setValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val, llvm::Value *sub_idx = nullptr);
     llvm::Value *getValue(const std::string &ident, L24Type::ValType ty, llvm::Value *sub_idx = nullptr);
     bool inCurrentLayer(const std::string &ident);

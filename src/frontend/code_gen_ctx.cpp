@@ -24,7 +24,7 @@ void CodeGenContext::popNamedValuesLayer() {
     _nested_named_values.pop_back();
 }
 
-void CodeGenContext::defineValue(const std::string &ident, L24Type::ValType ty, std::vector<llvm::Value*>vals, llvm::Value *array_size)  {
+void CodeGenContext::defineValue(const std::string &ident, L24Type::ValType ty, std::vector<llvm::Value*>vals, llvm::Value *array_size, bool is_ptr)  {
     assert(ty == L24Type::ValType::CONST || ty == L24Type::ValType::VAR);
 
     // this var/const is a global var/const
@@ -37,8 +37,8 @@ void CodeGenContext::defineValue(const std::string &ident, L24Type::ValType ty, 
 
     if (named_values.count(ident) == 0) {
         switch (ty) {
-        case L24Type::ValType::CONST: named_values[ident] = L24Type::ConstVal(this->createDefineValueInst(vals, ident, array_size)); break;
-        case L24Type::ValType::VAR: named_values[ident] = L24Type::VarVal(this->createDefineValueInst(vals, ident, array_size)); break;
+        case L24Type::ValType::CONST: named_values[ident] = L24Type::ConstVal(this->createDefineValueInst(vals, ident, array_size, is_ptr)); break;
+        case L24Type::ValType::VAR: named_values[ident] = L24Type::VarVal(this->createDefineValueInst(vals, ident, array_size, is_ptr)); break;
         default: LogError("you must specify var/const of this ident");
         }
     } else {
@@ -117,7 +117,7 @@ bool CodeGenContext::inCurrentLayer(const std::string &ident) {
     return getNamedValues(getCurrentLayer()).count(ident) != 0;
 }
 
-void CodeGenContext::codeGenStandardLibrary() {
+void CodeGenContext::codeGenStandardLibrary() const {
     // void getint();
     llvm::FunctionType *ft_getint =
         llvm::FunctionType::get(llvm::Type::getInt64Ty(*_context), false);

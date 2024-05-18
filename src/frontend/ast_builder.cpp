@@ -320,7 +320,12 @@ std::any ASTBuilder::visitFuncFParams(l24Parser::FuncFParamsContext *ctx) {
 }
 std::any ASTBuilder::visitFuncFParam(l24Parser::FuncFParamContext *ctx) {
     auto func_f_param_node = std::make_shared<FuncFParamNode>();
-    func_f_param_node->_type = ctx->Int()->getText();
+    // pointer
+    if (ctx->LeftSqrBr()) {
+        func_f_param_node->_type = "pointer";
+    } else {
+        func_f_param_node->_type = ctx->Int()->getText();
+    }
     func_f_param_node->_ident = ctx->Ident()->getText();
     return func_f_param_node;
 }
