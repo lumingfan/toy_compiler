@@ -462,7 +462,7 @@ llvm::Value *CodeGenBase::codeGenConstDecl(std::shared_ptr<ASTNode> node) {
 }
 llvm::Value *CodeGenBase::codeGenConstDef(std::shared_ptr<ASTNode> node) {
     auto const_def_node = std::dynamic_pointer_cast<ConstDefNode>(node);
-    auto init_val_node = std::dynamic_pointer_cast<InitValNode>(const_def_node->_exp);
+    auto init_val_node = std::dynamic_pointer_cast<InitValNode>(const_def_node->_init_val);
 
     // array
     if (const_def_node->_exp != nullptr) {
@@ -488,7 +488,7 @@ llvm::Value *CodeGenBase::codeGenVarDecl(std::shared_ptr<ASTNode> node) {
 }
 llvm::Value *CodeGenBase::codeGenVarDef(std::shared_ptr<ASTNode> node) {
     auto var_def_node = std::dynamic_pointer_cast<VarDefNode>(node);
-    auto init_val_node = std::dynamic_pointer_cast<InitValNode>(var_def_node->_exp);
+    auto init_val_node = std::dynamic_pointer_cast<InitValNode>(var_def_node->_init_val);
 
     // array
     if (var_def_node->_exp != nullptr) {
