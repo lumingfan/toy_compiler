@@ -76,6 +76,10 @@ std::any ASTBuilder::visitStmt(l24Parser::StmtContext *ctx) {
 
     if (ctx->lVal()) {
         stmt->_l_val = ctx->lVal()->Ident()->getText();
+        // array
+        if (ctx->lVal()->exp()) {
+            stmt->_sub_idx = std::move(std::any_cast<std::shared_ptr<ExprNode>>(visitExp(ctx->lVal()->exp())));
+        }
     }
     if (ctx->exp()) {
         stmt->_expr = std::move(std::any_cast<std::shared_ptr<ExprNode>>(visitExp(ctx->exp())));

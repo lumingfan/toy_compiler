@@ -87,7 +87,7 @@ private:
         llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), sub_idx};
 
         auto ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
-        return this->_builder->CreateLoad(alloca->getAllocatedType(), ptr, ident.c_str());
+        return this->_builder->CreateLoad(ty, ptr, ident.c_str());
     }
 
 

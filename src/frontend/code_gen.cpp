@@ -192,7 +192,11 @@ llvm::Value *CodeGenBase::codeGenStmt(std::shared_ptr<ASTNode> node) {
         return new_val;
     }
 
-    this->_ctx.setValue(stmt_node->_l_val, L24Type::ValType::VAR, new_val);
+    llvm::Value *sub_idx = nullptr;
+    if (stmt_node->_sub_idx) {
+        sub_idx = this->codeGenExp(stmt_node->_sub_idx);
+    }
+    this->_ctx.setValue(stmt_node->_l_val, L24Type::ValType::VAR, new_val, sub_idx);
     return new_val;
 }
 llvm::Value *CodeGenBase::codeGenIfStmt(std::shared_ptr<ASTNode> node) {

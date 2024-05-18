@@ -1,0 +1,22 @@
+int d[10] = {1, 2, 3, 4, 5};
+int a = 0;
+
+int main() {
+
+    putint(d[a]);
+    putch(10);
+
+    d[a] = 10;
+    putint(d[a]);
+    putch(10);
+
+    a = 6;
+    putint(d[a]);
+    putch(10);
+
+    d[a] = 11;
+    putint(d[a]);
+    putch(10);
+
+    return 0;
+}
