@@ -57,7 +57,7 @@ void CodeGenContext::setValue(const std::string &ident, L24Type::ValType ty, llv
         }
     }
     if (valid_layer == -1) {
-        setGlobalValue(ident, llvm::Type::getInt64Ty(*_context), val, sub_idx);
+        setGlobalValue(ident, val, sub_idx);
         return ;
     }
 
@@ -88,7 +88,7 @@ llvm::Value *CodeGenContext::getValue(const std::string &ident, L24Type::ValType
     }
 
     if (valid_layer == -1) {
-        return getGlobalValue(ident, llvm::Type::getInt64Ty(*_context), sub_idx);
+        return getGlobalValue(ident, sub_idx);
     }
 
     auto &named_values = getNamedValues(valid_layer);
@@ -164,12 +164,13 @@ void CodeGenContext::defineGlobalValue(const std::string &ident, llvm::Type *ty,
     }
 }
 
-void CodeGenContext::setGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *val, llvm::Value *sub_idx) {
+void CodeGenContext::setGlobalValue(const std::string &ident, llvm::Value *val, llvm::Value *sub_idx) {
     if (_module->getGlobalVariable(ident) == nullptr) {
         CodeGenContext::LogError("global var/const: " + ident + " doesn't exist");
     }
 
     llvm::GlobalVariable* key = _module->getGlobalVariable(ident);
+    llvm::Type *ty = key->getValueType();
 
     // scalar
     if (sub_idx == nullptr) {
@@ -195,11 +196,12 @@ void CodeGenContext::setGlobalValue(const std::string &ident, llvm::Type *ty, ll
 }
 
 
-llvm::Value *CodeGenContext::getGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value* sub_idx) {
+llvm::Value *CodeGenContext::getGlobalValue(const std::string &ident, llvm::Value* sub_idx) {
     if (_module->getGlobalVariable(ident) == nullptr) {
         CodeGenContext::LogError("global var/const: " + ident + " doesn't exist");
     }
     llvm::GlobalVariable* key = _module->getGlobalVariable(ident);
+    llvm::Type *ty = key->getValueType();
 
     // scalar
     if (sub_idx == nullptr) {

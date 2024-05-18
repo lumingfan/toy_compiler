@@ -81,7 +81,7 @@ funcFParams
     ;
 
 funcFParam
-    : 'int' Ident
+    : 'int' Ident ('[' ']')?
     ;
 
 funcRParams

@@ -117,8 +117,8 @@ public:
     llvm::Value *getValue(const std::string &ident, L24Type::ValType ty, llvm::Value *sub_idx = nullptr);
     bool inCurrentLayer(const std::string &ident);
     void defineGlobalValue(const std::string &ident, llvm::Type *ty, std::vector<llvm::Value*> vals, llvm::Value *array_size = nullptr);
-    void setGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value* val, llvm::Value *sub_idx = nullptr);
-    llvm::Value *getGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *sub_idx = nullptr);
+    void setGlobalValue(const std::string &ident, llvm::Value* val, llvm::Value *sub_idx = nullptr);
+    llvm::Value *getGlobalValue(const std::string &ident, llvm::Value *sub_idx = nullptr);
 };
 
 } // namespace l24
