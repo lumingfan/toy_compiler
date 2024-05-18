@@ -61,15 +61,15 @@ private:
         // set a scalar value
         if (sub_idx == nullptr) {
             this->_builder->CreateStore(val, alloca);
+            return ;
         }
 
         // get value from an array
-        auto idx = llvm::dyn_cast<llvm::ConstantInt>(sub_idx)->getSExtValue();
         auto ty = llvm::Type::getInt64Ty(*(this->_context));
         auto alloca_ty = llvm::ArrayType::get(ty, llvm::dyn_cast<llvm::ConstantInt>(alloca->getArraySize())->getSExtValue());
 
         // we don't support struct, so the first value of indexList always be 0
-        llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), llvm::ConstantInt::get(ty, idx)};
+        llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), sub_idx};
         auto ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
         this->_builder->CreateStore(val, ptr);
     }
@@ -81,11 +81,10 @@ private:
         }
 
         // get value from an array
-        auto idx = llvm::dyn_cast<llvm::ConstantInt>(sub_idx)->getSExtValue();
         auto ty = llvm::Type::getInt64Ty(*(this->_context));
         auto alloca_ty = llvm::ArrayType::get(ty, llvm::dyn_cast<llvm::ConstantInt>(alloca->getArraySize())->getSExtValue());
         // we don't support struct, so the first value of indexList always be 0
-        llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), llvm::ConstantInt::get(ty, idx)};
+        llvm::Value* indexList[2] = {llvm::ConstantInt::get(ty, 0), sub_idx};
 
         auto ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
         return this->_builder->CreateLoad(alloca->getAllocatedType(), ptr, ident.c_str());
@@ -117,9 +116,9 @@ public:
     void setValue(const std::string &ident, L24Type::ValType ty, llvm::Value *val, llvm::Value *sub_idx = nullptr);
     llvm::Value *getValue(const std::string &ident, L24Type::ValType ty, llvm::Value *sub_idx = nullptr);
     bool inCurrentLayer(const std::string &ident);
-    void defineGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *val);
-    void setGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *val);
-    llvm::Value *getGlobalValue(const std::string &ident, llvm::Type *ty);
+    void defineGlobalValue(const std::string &ident, llvm::Type *ty, std::vector<llvm::Value*> vals, llvm::Value *array_size = nullptr);
+    void setGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value* val, llvm::Value *sub_idx = nullptr);
+    llvm::Value *getGlobalValue(const std::string &ident, llvm::Type *ty, llvm::Value *sub_idx = nullptr);
 };
 
 } // namespace l24

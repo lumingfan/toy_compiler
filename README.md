@@ -145,3 +145,6 @@ llvm 创建获取指针的指令
 Value *CreateGEP(Type *Ty, Value *Ptr, ArrayRef<Value *> IdxList,
                    const Twine &Name = "", bool IsInBounds = false) {
 ```
+
+获取指定数组下标对应的元素
+https://discourse.llvm.org/t/llvm-loadinst-turn-to-int-value-in-llvm-16/70941
