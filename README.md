@@ -135,7 +135,7 @@ llvm `CreateLogicalOr` and `CreateLogicalAnd` doesn't support short-circuit eval
 
 
 
-llvm 创建获取指针的指令
+llvm 创建获取数组的指令
 
 [doc](https://llvm.org/docs/GetElementPtr.html)
 [doc](https://llvm.org/docs/LangRef.html#getelementptr-instruction)
@@ -143,8 +143,37 @@ llvm 创建获取指针的指令
 ```c++
 // IdxList: 
 Value *CreateGEP(Type *Ty, Value *Ptr, ArrayRef<Value *> IdxList,
-                   const Twine &Name = "", bool IsInBounds = false) {
+                   const Twine &Name = "", bool IsInBounds = false);
+// eg: int arr[];
+
+auto ty = llvm::Type::getInt64Ty(*(this->_context));
+auto alloca_ty = alloca->getAllocatedType();
+
+// we don't support struct, so the first value of indexList always be 0
+auto first_val = llvm::ConstantInt::get(ty, 0);
+
+int64_t idx = 0;
+for (llvm::Value *val : vals) {
+    llvm::Value* indexList[2] = {first_val, llvm::ConstantInt::get(ty, idx)};
+    auto ptr = this->_builder->CreateGEP(alloca_ty, alloca, indexList);
+    this->_builder->CreateStore(val, ptr);
+    ++idx;
+}                  
 ```
 
 获取指定数组下标对应的元素
 https://discourse.llvm.org/t/llvm-loadinst-turn-to-int-value-in-llvm-16/70941
+
+
+llvm 创建指针的函数：
+
+```c++
+Value * CreateInBoundsGEP (Type *Ty, Value *Ptr, ArrayRef< Value * > IdxList, const Twine &Name="");
+
+// eg: void func(int64_t *ptr);
+
+auto ty = llvm::Type::getInt64Ty(*(this->_context));
+llvm::Type *pt_ty = llvm::PointerType::get(llvm::IntegerType::get(*(this->_context), 64), 0);
+ptr = this->_builder->CreateInBoundsGEP(ty, this->_builder->CreateLoad(pt_ty, alloca), sub_idx);
+```
+

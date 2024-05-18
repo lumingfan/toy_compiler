@@ -119,25 +119,38 @@ bool CodeGenContext::inCurrentLayer(const std::string &ident) {
 
 void CodeGenContext::codeGenStandardLibrary() const {
     // void getint();
+    llvm::Type *int64_ty = llvm::Type::getInt64Ty(*_context);
+    llvm::Type *void_ty = llvm::Type::getVoidTy(*_context);
     llvm::FunctionType *ft_getint =
-        llvm::FunctionType::get(llvm::Type::getInt64Ty(*_context), false);
+        llvm::FunctionType::get(int64_ty, false);
     llvm::Function::Create(ft_getint, llvm::Function::ExternalLinkage, "getint", _module.get());
 
     // putint
     llvm::FunctionType *ft_putint =
-        llvm::FunctionType::get(llvm::Type::getVoidTy(*_context), {llvm::Type::getInt64Ty(*_context)}, false);
+        llvm::FunctionType::get(void_ty, {int64_ty}, false);
     llvm::Function::Create(ft_putint, llvm::Function::ExternalLinkage, "putint", _module.get());
 
     // getch
     llvm::FunctionType *ft_getch =
-        llvm::FunctionType::get(llvm::Type::getInt64Ty(*_context), false);
+        llvm::FunctionType::get(int64_ty, false);
     llvm::Function::Create(ft_getch, llvm::Function::ExternalLinkage, "getch", _module.get());
 
     // putch
     llvm::FunctionType *ft_putch =
-        llvm::FunctionType::get(llvm::Type::getVoidTy(*_context), {llvm::Type::getInt64Ty(*_context)}, false);
+        llvm::FunctionType::get(void_ty, {int64_ty}, false);
     llvm::Function::Create(ft_putch, llvm::Function::ExternalLinkage, "putch", _module.get());
 
+    llvm::PointerType *int64ptr_ty = llvm::PointerType::get(llvm::IntegerType::get(*(this->_context), 64), 0);
+
+    // putarray
+    llvm::FunctionType *ft_putarray =
+        llvm::FunctionType::get(void_ty, {int64_ty, int64ptr_ty}, false);
+    llvm::Function::Create(ft_putarray, llvm::Function::ExternalLinkage, "putarray", _module.get());
+
+    // getarray
+    llvm::FunctionType *ft_getarray =
+        llvm::FunctionType::get(int64_ty, {int64ptr_ty}, false);
+    llvm::Function::Create(ft_getarray, llvm::Function::ExternalLinkage, "getarray", _module.get());
 }
 void CodeGenContext::defineGlobalValue(const std::string &ident, llvm::Type *ty, std::vector<llvm::Value *>vals, llvm::Value *array_size) {
     if (_module->getGlobalVariable(ident) != nullptr) {

@@ -1,9 +1,15 @@
-int f1d(int a[]) {
-    return a[0] + a[1];
+int f1d(int len, int a[]) {
+    int i = 0;
+    int sum = 0;
+    while (i < len) {
+        sum = sum + a[i];
+        i = i + 1;
+    }
+    return sum;
 }
 
 
 int main() {
-    int a[20] = {1, 2};
-    return f1d(a);
+    int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    return f1d(10, a);
 }
