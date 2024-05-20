@@ -151,6 +151,17 @@ void CodeGenContext::codeGenStandardLibrary() const {
     llvm::FunctionType *ft_getarray =
         llvm::FunctionType::get(int64_ty, {int64ptr_ty}, false);
     llvm::Function::Create(ft_getarray, llvm::Function::ExternalLinkage, "getarray", _module.get());
+
+    // print
+    llvm::FunctionType *ft_print =
+        llvm::FunctionType::get(void_ty, {int64_ty, int64ptr_ty}, false);
+    llvm::Function::Create(ft_print, llvm::Function::ExternalLinkage, "print", _module.get());
+
+
+    // scan
+    llvm::FunctionType *ft_scan =
+        llvm::FunctionType::get(int64_ty, {int64ptr_ty}, false);
+    llvm::Function::Create(ft_scan, llvm::Function::ExternalLinkage, "scan", _module.get());
 }
 void CodeGenContext::defineGlobalValue(const std::string &ident, llvm::Type *ty, std::vector<llvm::Value *>vals, llvm::Value *array_size) {
     if (_module->getGlobalVariable(ident) != nullptr) {

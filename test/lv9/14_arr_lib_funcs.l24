@@ -1,21 +1,5 @@
-int puta(int n, int arr[]) {
-    putint(n);
-    putch(58);
-    putch(32);
-
-    int i = 0;
-    while (i < n) {
-        putint(arr[i]);
-        putch(32);
-        i = i + 1;
-    }
-    putch(10);
-}
-
 int main() {
-  int arr[10] = {1, 2, 3 ,4, 5};
-  int n = 5;
-  puta(n, arr);
+  int arr[10], n = scan(arr);
   int i = 0;
   while (i < 10) {
     if (i < n) then {
@@ -25,6 +9,6 @@ int main() {
     } end
     i = i + 1;
   }
-  puta(n, arr);
+  print(n, arr);
   return 0;
 }

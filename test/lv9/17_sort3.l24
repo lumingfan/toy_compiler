@@ -1,7 +1,7 @@
 int n;
 int QuickSort(int arr[], int low, int high)
 {
-    if (low < high)
+    if (low < high) then
     {
         int i;
         i = low;
@@ -16,22 +16,22 @@ int QuickSort(int arr[], int low, int high)
                 j = j - 1;
             }
  
-            if(i < j)
+            if(i < j) then
             {
                 arr[i] = arr[j];
                 i = i + 1;
-            }
+            } end
  
             while(i < j && arr[i] < k)
             {
                 i = i + 1;
             }
  
-            if(i < j)
+            if(i < j) then
             {
                 arr[j] = arr[i];
                 j = j - 1;
-            }
+            } end
         }
  
         arr[i] = k;
@@ -40,7 +40,7 @@ int QuickSort(int arr[], int low, int high)
         tmp = QuickSort(arr, low, tmp);
         tmp = i + 1;
         tmp = QuickSort(arr, tmp, high);
-    }
+    } end
     return 0;
 }
 

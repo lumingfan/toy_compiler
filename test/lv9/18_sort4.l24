@@ -11,19 +11,19 @@ int select_sort(int A[],int n)
         j = i + 1;
         while(j < n)
         {
-            if(A[min]>A[j])
+            if(A[min]>A[j]) then
             {
                 min=j;
-            }
+            } end
             j=j+1;
         }
-        if(min!=i)
+        if(min!=i) then
         {
             int tmp;
             tmp = A[min];
             A[min] = A[i];
             A[i] = tmp;
-        }
+        } end
         i = i + 1;
     }
     return 0;

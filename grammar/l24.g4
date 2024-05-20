@@ -10,8 +10,6 @@ While : 'while';
 Continue : 'continue';
 Break : 'break';
 Return : 'return';
-Scan : 'scan';
-Print : 'print';
 Const : 'const';
 Int : 'int';
 Void : 'void';
