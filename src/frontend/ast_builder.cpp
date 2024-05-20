@@ -100,6 +100,7 @@ std::any ASTBuilder::visitStmt(l24Parser::StmtContext *ctx) {
 std::any ASTBuilder::visitNumber(l24Parser::NumberContext *ctx) {
     return std::make_shared<NumberNode>(std::stoll(ctx->IntLiteral()->getText()));
 }
+
 std::any ASTBuilder::visitExp(l24Parser::ExpContext *ctx) {
     auto expr = std::make_shared<ExprNode>();
     expr->_lor_expr = std::move(std::any_cast<std::shared_ptr<LorExprNode>>(visitLOrExp(ctx->lOrExp())));
@@ -290,8 +291,12 @@ std::any ASTBuilder::visitVarDef(l24Parser::VarDefContext *ctx) {
 
 std::any ASTBuilder::visitInitVal(l24Parser::InitValContext *ctx) {
     auto init_val_node = std::make_shared<InitValNode>();
-    if (ctx->LeftBrace()) {
+    if (ctx->LeftBrace() || ctx->StringLiteral()) {
         init_val_node->_is_array = true;
+    }
+    if (ctx->StringLiteral()) {
+        std::string str_with_quote = ctx->StringLiteral()->getText();
+        init_val_node->_string_literal = str_with_quote.substr(1, str_with_quote.length() - 2);
     }
     for (auto exp_ctx_node : ctx->exp()) {
         init_val_node->_exp.push_back(std::move(std::any_cast<std::shared_ptr<ExprNode>>(visitExp(exp_ctx_node))));

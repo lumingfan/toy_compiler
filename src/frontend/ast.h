@@ -98,6 +98,7 @@ public:
 class InitValNode : public ASTNode {
 public:
     bool _is_array;
+    std::string _string_literal;
     std::vector<std::shared_ptr<ASTNode>> _exp;
 };
 

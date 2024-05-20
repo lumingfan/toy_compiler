@@ -162,6 +162,26 @@ void CodeGenContext::codeGenStandardLibrary() const {
     llvm::FunctionType *ft_scan =
         llvm::FunctionType::get(int64_ty, {int64ptr_ty}, false);
     llvm::Function::Create(ft_scan, llvm::Function::ExternalLinkage, "scan", _module.get());
+
+    // printStr
+    llvm::FunctionType *ft_print_str =
+        llvm::FunctionType::get(void_ty, {int64_ty, int64ptr_ty}, false);
+    llvm::Function::Create(ft_print_str, llvm::Function::ExternalLinkage, "printStr", _module.get());
+
+    // plusStrStr
+    llvm::FunctionType *ft_plus_str_str =
+        llvm::FunctionType::get(void_ty, {int64ptr_ty, int64ptr_ty, int64_ty, int64_ty, int64ptr_ty}, false);
+    llvm::Function::Create(ft_plus_str_str, llvm::Function::ExternalLinkage, "plusStrStr", _module.get());
+
+    // mulStrNum
+    llvm::FunctionType *ft_mul_str_num =
+        llvm::FunctionType::get(void_ty, {int64ptr_ty, int64_ty, int64_ty, int64ptr_ty}, false);
+    llvm::Function::Create(ft_mul_str_num, llvm::Function::ExternalLinkage, "mulStrNum", _module.get());
+
+    // plusStrNum
+    llvm::FunctionType *ft_plus_str_num =
+        llvm::FunctionType::get(void_ty, {int64ptr_ty, int64_ty, int64_ty, int64ptr_ty}, false);
+    llvm::Function::Create(ft_plus_str_num, llvm::Function::ExternalLinkage, "plusStrNum", _module.get());
 }
 void CodeGenContext::defineGlobalValue(const std::string &ident, llvm::Type *ty, std::vector<llvm::Value *>vals, llvm::Value *array_size) {
     if (_module->getGlobalVariable(ident) != nullptr) {

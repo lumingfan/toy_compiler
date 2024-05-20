@@ -530,10 +530,16 @@ std::vector<llvm::Value*> CodeGenBase::getInitVals(std::shared_ptr<InitValNode> 
         // cases:
         //  1. int a;
         //  2. int a[2] = {1};
-        if (node == nullptr || idx >= node->_exp.size()) {
+        //  3. int a[10] = "Hello";
+        int exp_size = node == nullptr ? 0 : std::max(node->_exp.size(), node->_string_literal.size());
+        if (node == nullptr || idx >= exp_size) {
             val_vec.emplace_back(this->getInitInt());
         } else {
-            val_vec.emplace_back(this->codeGenExp(node->_exp[idx]));
+            if (node->_exp.empty()) {
+                val_vec.emplace_back(llvm::ConstantInt::get(*(this->_ctx._context), llvm::APInt(64, node->_string_literal[idx], false)));
+            } else {
+                val_vec.emplace_back(this->codeGenExp(node->_exp[idx]));
+            }
         }
     }
     return val_vec;

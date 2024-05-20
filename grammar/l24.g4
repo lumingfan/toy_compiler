@@ -11,7 +11,7 @@ Continue : 'continue';
 Break : 'break';
 Return : 'return';
 Const : 'const';
-Int : 'int';
+Int : 'int' | 'char';
 Void : 'void';
 
 
@@ -69,7 +69,7 @@ program
     ;
 
 func
-    : 'int' Ident '(' (funcFParams)? ')' block
+    : Int Ident '(' (funcFParams)? ')' block
     | 'void' Ident '(' (funcFParams)? ')' block
     ;
 
@@ -79,7 +79,7 @@ funcFParams
     ;
 
 funcFParam
-    : 'int' Ident ('[' ']')?
+    : Int Ident ('[' ']')?
     ;
 
 funcRParams
@@ -120,7 +120,7 @@ varDecl
     ;
 
 bType
-    : 'int'
+    : Int
 ;
 
 constDef
@@ -135,6 +135,7 @@ varDef
 initVal
     : exp
     | '{' (exp (',' exp)*)? '}'
+    | StringLiteral
     ;
 
 lVal

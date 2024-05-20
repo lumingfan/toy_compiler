@@ -1,0 +1,17 @@
+int main() {
+    char a[1] = "a";
+    char b[1] = "b";
+    char c[2];
+
+    plusStrStr(a, b, 1, 1, c);
+    printStr(2, c);
+
+    char d[3];
+    plusStrNum(c, 1, 2, d);
+    printStr(3, d);
+
+    char e[9];
+    mulStrNum(d, 3, 3, e);
+    printStr(9, e);
+    return 0;
+}
