@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cassert>
 
-#include "frontend/code_gen_ctx.h"
+#include "backend/code_gen_ctx.h"
 
 namespace l24 {
 

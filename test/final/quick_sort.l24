@@ -1,0 +1,39 @@
+void swap(int arr[], int lhs, int rhs) {
+    int temp = arr[lhs]; arr[lhs] = arr[rhs]; arr[rhs] = temp;
+}
+
+void partition(int arr[], int low, int high, int res[]) {
+    int i = low - 1, j = low - 1, k = low;
+    while (k < high) {
+        if (arr[k] < arr[high]) then {
+            i = i + 1; j = j + 1;
+            swap(arr, k, i);
+            if (arr[k] == arr[high]) then {
+                swap(arr, k, j);
+            } end
+        } else if (arr[k] == arr[high]) then {
+            j = j + 1;
+            swap(arr, k, j);
+        } end end
+        k = k + 1;
+    }
+    j = j + 1;
+    swap(arr, j, high);
+    res[0] = i; res[1] = j;
+}
+
+void quickSort(int arr[], int low, int high) {
+    if (low < high) then {
+        int res[2];
+        partition(arr, low, high, res);
+        quickSort(arr, low, res[0]);
+        quickSort(arr, res[1] + 1, high);
+    } end
+}
+
+int main(){
+    int a[10], n = scan(a);
+    quickSort(a, 0, n - 1);
+    print(n, a);
+    return 0;
+}

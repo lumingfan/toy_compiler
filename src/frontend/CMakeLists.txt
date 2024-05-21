@@ -7,13 +7,6 @@ include_directories(${ANTLR_l24Grammar_OUTPUT_DIR})
 # define a library for the front end
 add_library(frontend)
 target_sources(frontend PRIVATE 
-        ${CMAKE_CURRENT_SOURCE_DIR}/code_gen_ctx.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/code_gen_ctx.cpp
-
-
-        ${CMAKE_CURRENT_SOURCE_DIR}/code_gen.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/code_gen.cpp
-
         ${CMAKE_CURRENT_SOURCE_DIR}/ast_builder.h
         ${CMAKE_CURRENT_SOURCE_DIR}/ast_builder.cpp
 

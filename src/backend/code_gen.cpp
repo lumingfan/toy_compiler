@@ -1,4 +1,4 @@
-#include "frontend/code_gen.h"
+#include "backend/code_gen.h"
 #include "frontend/type.h"
 
 namespace l24 {
@@ -57,7 +57,7 @@ llvm::Value *CodeGenBase::codeGenEntry(std::shared_ptr<ASTNode> node) {
     // generate function declaration for standard library
     this->_ctx.codeGenStandardLibrary();
     this->codeGenProgram(entry_node->_prog);
-    this->_ctx._module->print(llvm::errs(), nullptr);
+    this->_ctx._module->print(llvm::outs(), nullptr);
     return nullptr;
 }
 

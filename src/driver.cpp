@@ -17,7 +17,7 @@
 
 #include "frontend/ast.h"
 #include "frontend/front_end.h"
-#include "frontend/code_gen.h"
+#include "backend/code_gen.h"
 
 using namespace antlr4;
 using namespace l24;

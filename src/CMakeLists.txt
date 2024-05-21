@@ -1,8 +1,6 @@
 # Build the phase specific libraries
 add_subdirectory(frontend)
-# add_subdirectory(semantic)
-# add_subdirectory(codegen)
-# add_subdirectory(optimizer)
+add_subdirectory(backend)
 
 
 # configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h @ONLY)
@@ -17,14 +15,13 @@ add_executable(l24
 )
 
 
-target_link_libraries(l24 PRIVATE frontend
-        #  semantic
-        #  ircodegen
-        #  asmcodegen
-        #  optimizer
+target_link_libraries(l24 PRIVATE 
+        frontend
+        backend
         antlr4_static
         ${llvm_libs}
 )
+
 
 # runtime
 # add_subdirectory(runtime)

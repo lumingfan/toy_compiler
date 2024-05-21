@@ -48,8 +48,12 @@ Not:                '!';
 Ident :                [a-zA-Z_][a-zA-Z0-9_]*;
  
 //空白字符，抛弃
-Whitespace:         [ \t]+ -> skip;
-Newline:            ( '\r' '\n'?|'\n')-> skip;
+Whitespace
+    : [ \t]+ -> channel(HIDDEN)
+    ;
+Newline
+    : ('\r' '\n'? | '\n') -> channel(HIDDEN)
+    ;
 
 // comments, skip
 BlockComments:           '/*'.*?'*/' -> skip;

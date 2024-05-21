@@ -1,17 +1,17 @@
 int main() {
-    char a[1] = "a";
-    char b[1] = "b";
-    char c[2];
+    char a[3] = "abc";
+    char b[3] = "def";
+    char c[6];
 
-    plusStrStr(a, b, 1, 1, c);
-    printStr(2, c);
+    plusStrStr(a, b, 3, 3, c);
+    printStr(6, c);
 
-    char d[3];
-    plusStrNum(c, 1, 2, d);
-    printStr(3, d);
+    char d[7];
+    plusStrNum(c, 1, 6, d);
+    printStr(7, d);
 
-    char e[9];
-    mulStrNum(d, 3, 3, e);
-    printStr(9, e);
+    char e[21];
+    mulStrNum(d, 3, 7, e);
+    printStr(21, e);
     return 0;
 }
